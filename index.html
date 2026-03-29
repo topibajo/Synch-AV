@@ -41,16 +41,11 @@ html, body {
 .screen.active { display: flex; flex-direction: column; }
 
 #home {
-  align-items: center;
-  padding: 24px;
-  gap: 28px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  align-items: center; padding: 24px; gap: 28px;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
   padding-top: max(24px, env(safe-area-inset-top));
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
-
 .home-header { text-align: center; flex-shrink: 0; padding-top: 16px; }
 .home-header h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; color: var(--accent); }
 .home-header p { color: var(--text2); font-size: 11px; margin-top: 8px; letter-spacing: 3px; text-transform: uppercase; }
@@ -159,6 +154,15 @@ html, body {
 </head>
 <body>
 
+<!--
+  Silent audio element: forces iOS into "media playback" mode
+  which bypasses the hardware silent switch. The src is a tiny
+  base64-encoded MP3 of ~0.05s silence, looped.
+-->
+<audio id="silent-audio" loop playsinline>
+  <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwmHAAAAAAD/+1DEAAAHAAGf9AAAIMAAMP/AAAAROIETRF8oCAgBBn/BwMf8HAfB8HwfB8EAQBA5/ggCAIHf/8uD7/5cH3+D4Pg+D4Pg+D4PvBAEAQOf4YAgZDIZBgGAwGDIMAwGB3/ygIAgCBz/BAEAQOf4PvyhkMgyCAYHf/KAgCAIHP8EAQBA5/g4GP+D4Pg+D4Ph///KAgCAIAhMf/lAQBAEDn+CAIAgc/wcDH/B8HwfB8HwfB8H//5QEAQBAEJn/8oCBkMhkGAYDAYMgwDAYHf/KAgCAIHP8EAQBA5/g4GP+XB9/g+D4Pg+D4Pg+D7/8oCAIAgCEz/+UBAyGQyDAMBgMGQYBgMDv/lAQBAEDn+CAIAgc/wfB8H3/y4Pv8HwfB8HwfB8H3/5QEAQBAEJj/8oCAIAgc/wQBAEDn+DgY/4Pg+D4Pg+D4Pg+//KAgCAIAhM//lAQMhkMgwDAYDBkGAYDA7/5QEAQOf4IAgCBz/B8Hwff/Lg+/wfB8HwfB8HwfB9/+UBAEAQBCYQAAAAAElJJJAAAAAA" type="audio/mp3">
+</audio>
+
 <div id="home" class="screen active">
   <div class="home-header">
     <h1>Sync Test Pro</h1>
@@ -231,15 +235,19 @@ html, body {
 
 <script>
 // ============================================================
-//  SYNC ENGINE v6 — iOS-proof audio
+//  SYNC ENGINE v7 — iOS silent switch bypass
 //
-//  KEY PRINCIPLE: AudioContext is created ONCE on the first
-//  user tap and NEVER closed. iOS locks audio permanently if
-//  you close and recreate a context outside a gesture.
+//  1. A looping <audio> element with a silent MP3 is played
+//     on the first user touch. This tells iOS "this is media,
+//     not a sound effect" → bypasses the silent switch.
 //
-//  To stop beeps on exit: all oscillators route through a
-//  masterGain node. Disconnecting masterGain = instant silence.
-//  A fresh masterGain is created on each new player session.
+//  2. AudioContext is created ONCE, never closed (iOS rule).
+//
+//  3. Web Audio oscillators route through a masterGain node.
+//     Disconnecting masterGain = instant silence on exit.
+//
+//  4. The silent <audio> keeps looping to maintain media mode.
+//     It pauses when we return to home to release audio focus.
 // ============================================================
 
 const FREQ_EVEN_COUNTER = 1000, FREQ_ODD_COUNTER = 500;
@@ -249,10 +257,11 @@ const COL_EVEN_DIM = 'rgba(59,130,246,', COL_ODD_DIM = 'rgba(249,115,22,';
 const BEEP_DUR = 0.05, SCHEDULE_AHEAD = 5;
 
 let pattern = null, fps = null, scan = null;
-let audioCtx = null;
-let masterGain = null;
+let audioCtx = null, masterGain = null;
 let animId = null, playing = false, hudTimer = null;
 let audioT0 = 0, perfT0 = 0, scheduledUpTo = -1;
+let silentAudio = null;
+let mediaSessionActive = false;
 
 const names = { counter:'Compteur + Bip', bars:'Mire EBU', bounce:'Bouncing Ball' };
 
@@ -260,35 +269,53 @@ function isEven(s) { return s % 2 === 0; }
 function colFor(s) { return isEven(s) ? COL_EVEN : COL_ODD; }
 function colDim(s, a) { return (isEven(s) ? COL_EVEN_DIM : COL_ODD_DIM) + a + ')'; }
 
-// ===== iOS AUDIO: create once, never close =====
+// ===== iOS SILENT SWITCH BYPASS =====
+// Playing an <audio> element switches iOS from "ambient" (respects
+// silent switch) to "playback" (ignores silent switch) audio session.
+function activateMediaSession() {
+  if (mediaSessionActive) return;
+  silentAudio = document.getElementById('silent-audio');
+  if (silentAudio) {
+    silentAudio.volume = 0.01; // near-silent but not 0 (iOS ignores volume=0)
+    const playPromise = silentAudio.play();
+    if (playPromise) playPromise.catch(() => {});
+    mediaSessionActive = true;
+  }
+}
+
+function deactivateMediaSession() {
+  if (silentAudio && mediaSessionActive) {
+    silentAudio.pause();
+    mediaSessionActive = false;
+  }
+}
+
+// ===== AUDIO CONTEXT =====
 function ensureAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-// Called on every user tap to keep iOS happy
-function unlockAudio() {
+// Unlock audio + activate media session on every user gesture
+function unlockAndActivate() {
   ensureAudio();
-  // Play a tiny silent buffer — the iOS unlock trick
-  // This must happen during a direct user gesture
+  // Silent buffer trick for Web Audio unlock
   const buf = audioCtx.createBuffer(1, 1, 22050);
   const src = audioCtx.createBufferSource();
   src.buffer = buf;
   src.connect(audioCtx.destination);
   src.start(0);
+  // Also start the silent <audio> to bypass silent switch
+  activateMediaSession();
 }
 
-// Attach to all user gestures (not { once: true } — keep unlocking)
-document.addEventListener('touchstart', unlockAudio, true);
-document.addEventListener('mousedown', unlockAudio, true);
+document.addEventListener('touchstart', unlockAndActivate, true);
+document.addEventListener('mousedown', unlockAndActivate, true);
 
-// ===== MASTER GAIN: connect/disconnect for instant mute =====
+// ===== MASTER GAIN =====
 function createMasterGain() {
-  // Disconnect old one if it exists (kills all routed beeps)
   killAudio();
   masterGain = audioCtx.createGain();
   masterGain.gain.value = 1;
@@ -302,24 +329,20 @@ function killAudio() {
   }
 }
 
-// ===== BEEP SCHEDULING =====
+// ===== BEEPS =====
 function scheduleBeep(time, freq, dur) {
   if (!audioCtx || !masterGain) return;
   try {
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    o.type = 'sine';
-    o.frequency.value = freq;
+    o.type = 'sine'; o.frequency.value = freq;
     g.gain.setValueAtTime(0.5, time);
     g.gain.exponentialRampToValueAtTime(0.001, time + dur);
-    o.connect(g);
-    g.connect(masterGain); // routes through master — disconnect master = silence
-    o.start(time);
-    o.stop(time + dur + 0.02);
+    o.connect(g); g.connect(masterGain);
+    o.start(time); o.stop(time + dur + 0.02);
   } catch(e) {}
 }
 
-// Immediate beep through destination (for countdown, always audible)
 function beepNow(freq, dur) {
   ensureAudio();
   try {
@@ -329,10 +352,8 @@ function beepNow(freq, dur) {
     const t = audioCtx.currentTime;
     g.gain.setValueAtTime(0.5, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    o.connect(g);
-    g.connect(audioCtx.destination); // direct to destination, not master
-    o.start(t);
-    o.stop(t + dur + 0.02);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
   } catch(e) {}
 }
 
@@ -420,6 +441,7 @@ function drawThumbs() {
 function startCountdown() {
   showScreen('countdown');
   ensureAudio();
+  activateMediaSession(); // make sure media session is active for countdown beeps
 
   try { screen.orientation?.lock?.('landscape').catch(()=>{}); } catch(e){}
   try {
@@ -441,7 +463,7 @@ function startCountdown() {
     numEl.style.opacity = '1';
     numEl.style.transform = 'scale(1)';
 
-    beepNow(660, 0.06); // direct to destination, not through master
+    beepNow(660, 0.06);
     haptic();
 
     labelEl.textContent = count === 3 ? 'Préparation…' : count === 2 ? 'Attention…' : 'C\'est parti !';
@@ -456,8 +478,7 @@ function startCountdown() {
 function startPlayer() {
   showScreen('player');
   ensureAudio();
-
-  // Fresh master gain — any old scheduled beeps are now orphaned (silent)
+  activateMediaSession();
   createMasterGain();
 
   const cv = document.getElementById('player-canvas');
@@ -519,10 +540,8 @@ function startPlayer() {
 function stopPlayer() {
   playing = false;
   if (animId) cancelAnimationFrame(animId);
-
-  // Disconnect master gain — all scheduled beeps go silent instantly
-  // AudioContext stays alive for next session (iOS requirement)
   killAudio();
+  deactivateMediaSession(); // release audio focus
   scheduledUpTo = -1;
 
   try { (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch(()=>{}); } catch(e){}
@@ -533,104 +552,75 @@ function stopPlayer() {
 // ===== COUNTER =====
 function renderCounter(ctx, W, H, totalF, sec, frac) {
   const flash = frac < 0.07;
-  const even = isEven(sec);
-  const col = colFor(sec);
-
+  const even = isEven(sec); const col = colFor(sec);
   ctx.fillStyle = flash ? (even ? '#1a2e5a' : '#3d200a') : '#09090b';
   ctx.fillRect(0,0,W,H);
-
   const cx = W/2, cy = H*0.43, r = Math.min(W,H)*0.17;
-
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
   ctx.strokeStyle = flash ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 2.5; ctx.stroke();
-
   ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+Math.PI*2*frac);
   ctx.strokeStyle = flash ? 'rgba(255,255,255,0.5)' : col;
   ctx.lineWidth = 2.5; ctx.stroke();
-
   const fs = Math.min(W*0.18, H*0.32);
   ctx.font = `700 ${fs}px IBM Plex Mono, monospace`;
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(sec%60).padStart(2,'0'), cx, cy);
-
   ctx.beginPath(); ctx.arc(cx, cy + fs*0.42, 5, 0, Math.PI*2);
   ctx.fillStyle = col; ctx.fill();
-
   const ts = Math.min(W*0.035, H*0.05);
   ctx.font = `500 ${ts}px IBM Plex Mono, monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.fillText(smpte(totalF, fps), cx, cy+r+ts*2);
-
   ctx.font = `400 ${ts*0.7}px IBM Plex Mono, monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.15)';
   ctx.fillText(`Frame ${totalF}  ·  ${fps}${scan}`, cx, cy+r+ts*3.4);
-
   ctx.font = `600 ${ts*0.65}px IBM Plex Mono, monospace`;
   ctx.fillStyle = colDim(sec, '0.6');
   ctx.fillText(even ? `PAIR  ·  ${FREQ_EVEN_COUNTER} Hz` : `IMPAIR  ·  ${FREQ_ODD_COUNTER} Hz`, cx, cy+r+ts*4.8);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.03)';
-  ctx.fillRect(0,H-3,W,3);
-  ctx.fillStyle = colDim(sec, '0.4');
-  ctx.fillRect(0,H-3,W*frac,3);
+  ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fillRect(0,H-3,W,3);
+  ctx.fillStyle = colDim(sec, '0.4'); ctx.fillRect(0,H-3,W*frac,3);
 }
 
 // ===== EBU BARS =====
 function renderBars(ctx, W, H, totalF, sec, frac) {
   const flash = frac < 0.06;
-  const even = isEven(sec);
-  const col = colFor(sec);
-
+  const even = isEven(sec); const col = colFor(sec);
   const bars = ['#c0c0c0','#c0c000','#00c0c0','#00c000','#c000c0','#c00000','#0000c0'];
   const bw = W/7, mainH = H*0.67;
   bars.forEach((c,i) => { ctx.fillStyle = c; ctx.fillRect(i*bw,0,bw+1,mainH); });
-
   const castH = H*0.08;
   ['#0000c0','#000','#c000c0','#000','#00c0c0','#000','#c0c0c0'].forEach((c,i) => {
     ctx.fillStyle = c; ctx.fillRect(i*bw, mainH, bw+1, castH);
   });
-
   const botY = mainH+castH;
   ctx.fillStyle = flash ? (even ? '#1a2e5a' : '#3d200a') : '#09090b';
   ctx.fillRect(0, botY, W, H-botY);
-
-  ctx.fillStyle = col;
-  ctx.fillRect(0, botY, W, 2);
-
+  ctx.fillStyle = col; ctx.fillRect(0, botY, W, 2);
   const ts = Math.min(W*0.04, (H-botY)*0.35);
   ctx.font = `700 ${ts}px IBM Plex Mono, monospace`;
   ctx.fillStyle = flash ? '#fff' : col;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(smpte(totalF, fps), W/2, botY+(H-botY)*0.35);
-
   ctx.font = `400 ${ts*0.5}px IBM Plex Mono, monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
   ctx.fillText(`${fps}${scan}  ·  Frame ${totalF}`, W/2, botY+(H-botY)*0.58);
-
   ctx.font = `600 ${ts*0.45}px IBM Plex Mono, monospace`;
   ctx.fillStyle = colDim(sec, '0.55');
   ctx.fillText(even ? `PAIR  ·  ${FREQ_EVEN_COUNTER} Hz` : `IMPAIR  ·  ${FREQ_ODD_COUNTER} Hz`, W/2, botY+(H-botY)*0.78);
-
   ctx.beginPath(); ctx.arc(W-22, 22, 5, 0, Math.PI*2);
   ctx.fillStyle = flash ? col : 'rgba(255,255,255,0.08)'; ctx.fill();
 }
 
 // ===== BOUNCING BALL =====
 function renderBounce(ctx, W, H, totalF, sec, frac) {
-  const even = isEven(sec);
-  const col = colFor(sec);
-
-  ctx.fillStyle = '#09090b';
-  ctx.fillRect(0,0,W,H);
-
+  const even = isEven(sec); const col = colFor(sec);
+  ctx.fillStyle = '#09090b'; ctx.fillRect(0,0,W,H);
   const cx = W/2, groundY = H*0.70;
-  const ballR = Math.min(W,H)*0.05;
-  const peakY = H*0.10 + ballR;
-
-  const height = 1 - Math.pow(2*frac-1, 2);
-  const ballY = groundY - (groundY-peakY)*height;
+  const ballR = Math.min(W,H)*0.05, peakY = H*0.10+ballR;
+  const height = 1-Math.pow(2*frac-1,2);
+  const ballY = groundY-(groundY-peakY)*height;
   const isImpact = frac < 0.055;
 
   ctx.strokeStyle = isImpact ? colDim(sec,'0.6') : 'rgba(255,255,255,0.06)';
@@ -641,90 +631,68 @@ function renderBounce(ctx, W, H, totalF, sec, frac) {
     const p = frac/0.055;
     ctx.strokeStyle = colDim(sec, String(0.3*(1-p)));
     ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(cx,groundY,ballR*1.2+p*55, 2+p*6, 0,0,Math.PI*2);
-    ctx.stroke();
-    if (p > 0.3) {
-      const p2 = (p-0.3)/0.7;
+    ctx.beginPath(); ctx.ellipse(cx,groundY,ballR*1.2+p*55,2+p*6,0,0,Math.PI*2); ctx.stroke();
+    if (p>0.3) {
+      const p2=(p-0.3)/0.7;
       ctx.strokeStyle = colDim(sec, String(0.15*(1-p2)));
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(cx,groundY,ballR*1.5+p2*80, 2+p2*8, 0,0,Math.PI*2);
-      ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx,groundY,ballR*1.5+p2*80,2+p2*8,0,0,Math.PI*2); ctx.stroke();
     }
   }
 
-  const dist = (groundY-ballY)/(groundY-peakY);
-  const sSc = 1-dist*0.5;
-  ctx.beginPath();
-  ctx.ellipse(cx,groundY+2,ballR*sSc*1.1,Math.max(2,4*sSc),0,0,Math.PI*2);
-  ctx.fillStyle = `rgba(255,255,255,${0.08*sSc})`;
-  ctx.fill();
+  const dist=(groundY-ballY)/(groundY-peakY), sSc=1-dist*0.5;
+  ctx.beginPath(); ctx.ellipse(cx,groundY+2,ballR*sSc*1.1,Math.max(2,4*sSc),0,0,Math.PI*2);
+  ctx.fillStyle = `rgba(255,255,255,${0.08*sSc})`; ctx.fill();
 
-  let sx=1, sy=1;
-  if (frac<0.035) { const sq=1-frac/0.035; sx=1+sq*0.3; sy=1-sq*0.25; }
-  else if (frac<0.09) { const st=(frac-0.035)/0.055; sx=1-st*0.06; sy=1+st*0.06; }
+  let sx=1,sy=1;
+  if (frac<0.035){const sq=1-frac/0.035;sx=1+sq*0.3;sy=1-sq*0.25;}
+  else if(frac<0.09){const st=(frac-0.035)/0.055;sx=1-st*0.06;sy=1+st*0.06;}
 
   if (isImpact) {
-    const a = 0.12*(1-frac/0.055);
-    ctx.beginPath(); ctx.arc(cx,groundY,ballR*3,0,Math.PI*2);
-    ctx.fillStyle = colDim(sec, String(a));
-    ctx.fill();
+    const a=0.12*(1-frac/0.055);
+    ctx.beginPath();ctx.arc(cx,groundY,ballR*3,0,Math.PI*2);
+    ctx.fillStyle=colDim(sec,String(a));ctx.fill();
   }
 
-  ctx.save();
-  ctx.translate(cx,ballY);
-  ctx.scale(sx,sy);
-  ctx.beginPath(); ctx.arc(0,0,ballR,0,Math.PI*2);
-  ctx.fillStyle = '#ffffff'; ctx.fill();
-  if (isImpact) {
-    ctx.beginPath(); ctx.arc(0,0,ballR,0,Math.PI*2);
-    ctx.fillStyle = colDim(sec,'0.25'); ctx.fill();
-  }
-  ctx.beginPath(); ctx.arc(-ballR*0.22,-ballR*0.28,ballR*0.3,0,Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fill();
+  ctx.save(); ctx.translate(cx,ballY); ctx.scale(sx,sy);
+  ctx.beginPath();ctx.arc(0,0,ballR,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+  if(isImpact){ctx.beginPath();ctx.arc(0,0,ballR,0,Math.PI*2);ctx.fillStyle=colDim(sec,'0.25');ctx.fill();}
+  ctx.beginPath();ctx.arc(-ballR*0.22,-ballR*0.28,ballR*0.3,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fill();
   ctx.restore();
 
-  const ts = Math.min(W*0.04,H*0.05);
-  ctx.font = `600 ${ts}px IBM Plex Mono, monospace`;
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const infoY = groundY+(H-groundY)*0.32;
-  ctx.fillText(smpte(totalF,fps), cx, infoY);
+  const ts=Math.min(W*0.04,H*0.05);
+  ctx.font=`600 ${ts}px IBM Plex Mono, monospace`;
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const infoY=groundY+(H-groundY)*0.32;
+  ctx.fillText(smpte(totalF,fps),cx,infoY);
+  ctx.font=`400 ${ts*0.6}px IBM Plex Mono, monospace`;
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.fillText(`${fps}${scan}  ·  Frame ${totalF}`,cx,infoY+ts*1.1);
+  ctx.font=`600 ${ts*0.55}px IBM Plex Mono, monospace`;
+  ctx.fillStyle=colDim(sec,'0.5');
+  const fl=isEven(sec)?`${FREQ_EVEN_BOUNCE} Hz`:`${FREQ_ODD_BOUNCE} Hz`;
+  ctx.fillText(even?`PAIR  ·  ${fl}`:`IMPAIR  ·  ${fl}`,cx,infoY+ts*2.2);
 
-  ctx.font = `400 ${ts*0.6}px IBM Plex Mono, monospace`;
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  ctx.fillText(`${fps}${scan}  ·  Frame ${totalF}`, cx, infoY+ts*1.1);
+  ctx.font=`500 ${ts*0.55}px IBM Plex Mono, monospace`;
+  ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,0.12)';
+  ctx.fillText(`SEC ${String(sec).padStart(4,'0')}`,14,22);
+  ctx.textAlign='right';ctx.fillText(`${fps}${scan}`,W-14,22);
 
-  ctx.font = `600 ${ts*0.55}px IBM Plex Mono, monospace`;
-  ctx.fillStyle = colDim(sec,'0.5');
-  const fl = isEven(sec) ? `${FREQ_EVEN_BOUNCE} Hz` : `${FREQ_ODD_BOUNCE} Hz`;
-  ctx.fillText(even ? `PAIR  ·  ${fl}` : `IMPAIR  ·  ${fl}`, cx, infoY+ts*2.2);
-
-  ctx.font = `500 ${ts*0.55}px IBM Plex Mono, monospace`;
-  ctx.textAlign = 'left';
-  ctx.fillStyle = 'rgba(255,255,255,0.12)';
-  ctx.fillText(`SEC ${String(sec).padStart(4,'0')}`, 14, 22);
-  ctx.textAlign = 'right';
-  ctx.fillText(`${fps}${scan}`, W-14, 22);
-
-  const dc=10,dg=14,dw=dc*dg;
-  const dx=cx-dw/2, dy=H-18;
-  for (let i=0;i<dc;i++) {
-    const active = (sec%dc)===i;
-    ctx.beginPath(); ctx.arc(dx+i*dg+4,dy,active?3.5:1.5,0,Math.PI*2);
-    ctx.fillStyle = active ? colDim(sec,'0.7') : 'rgba(255,255,255,0.06)';
-    ctx.fill();
+  const dc=10,dg=14,dw=dc*dg,dx=cx-dw/2,dy=H-18;
+  for(let i=0;i<dc;i++){
+    const active=(sec%dc)===i;
+    ctx.beginPath();ctx.arc(dx+i*dg+4,dy,active?3.5:1.5,0,Math.PI*2);
+    ctx.fillStyle=active?colDim(sec,'0.7'):'rgba(255,255,255,0.06)';ctx.fill();
   }
 }
 
 // Block scroll only on player/countdown
 document.addEventListener('touchmove', function(e) {
-  const player = document.getElementById('player');
-  const countdown = document.getElementById('countdown');
-  if (player.classList.contains('active') || countdown.classList.contains('active')) {
-    e.preventDefault();
-  }
+  const p = document.getElementById('player');
+  const c = document.getElementById('countdown');
+  if (p.classList.contains('active') || c.classList.contains('active')) e.preventDefault();
 }, { passive: false });
 
 document.addEventListener('DOMContentLoaded', drawThumbs);
