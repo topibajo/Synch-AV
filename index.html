@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Sync Test Pro v8</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #09090b;
+  --bg2: #111114;
+  --border: rgba(255,255,255,0.07);
+  --accent: #ffffff;
+  --accent-dim: rgba(255,255,255,0.5);
+  --text: #e4e4e7;
+  --text2: #6e6e78;
+  --even: #3b82f6;
+  --odd: #f97316;
+  --green: #22c55e;
+  --orange: #f97316;
+  --red: #ef4444;
+  --mono: 'IBM Plex Mono', 'SF Mono', 'Courier New', monospace;
+  --radius: 10px;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ===== HOME MODE (nouveau — choix Générateur / Analyseur) ===== */
+#home-mode {
+  align-items: center; justify-content: center; padding: 24px; gap: 32px;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+.home-mode-header { text-align: center; }
+.home-mode-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: var(--accent); }
+.home-mode-header p { color: var(--text2); font-size: 11px; margin-top: 8px; letter-spacing: 3px; text-transform: uppercase; }
+.mode-cards { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 380px; }
+.mode-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px 20px; cursor: pointer; transition: all 0.15s ease;
+}
+.mode-card:active { transform: scale(0.98); border-color: rgba(255,255,255,0.2); }
+.mode-card h2 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.mode-card p { font-size: 11px; color: var(--text2); line-height: 1.6; }
+.mode-card .badge {
+  display: inline-block; margin-bottom: 10px; padding: 3px 10px;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  border-radius: 12px; border: 1px solid var(--border);
+  color: var(--accent-dim); background: rgba(255,255,255,0.03);
+}
+.mode-card .badge.dev1 { color: var(--even); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.05); }
+.mode-card .badge.dev2 { color: var(--odd); border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.05); }
+
+#home {
+  align-items: center; padding: 24px; gap: 28px;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+.home-header { text-align: center; flex-shrink: 0; padding-top: 16px; }
+.home-header h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; color: var(--accent); }
+.home-header p { color: var(--text2); font-size: 11px; margin-top: 8px; letter-spacing: 3px; text-transform: uppercase; }
+
+.patterns-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 14px; width: 100%; max-width: 660px; flex-shrink: 0;
+}
+.pattern-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; overflow: hidden; transition: all 0.2s ease;
+}
+.pattern-card:active { transform: scale(0.97); border-color: rgba(255,255,255,0.2); }
+.pattern-thumb { width: 100%; aspect-ratio: 16/9; overflow: hidden; }
+.pattern-thumb canvas { width: 100%; height: 100%; display: block; }
+.pattern-info { padding: 12px 14px; }
+.pattern-info h3 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.pattern-info p { font-size: 10px; color: var(--text2); line-height: 1.5; }
+
+.section-label {
+  font-size: 10px; color: var(--text2); letter-spacing: 2px;
+  text-transform: uppercase; flex-shrink: 0; text-align: center;
+  width: 100%; max-width: 660px; padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.legend { display: flex; gap: 20px; justify-content: center; align-items: center; flex-shrink: 0; padding-bottom: 12px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.legend-dot.even { background: var(--even); }
+.legend-dot.odd { background: var(--odd); }
+
+#fps-select {
+  align-items: center; padding: 24px; gap: 28px;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+.fps-header { text-align: center; flex-shrink: 0; padding-top: 16px; }
+.fps-header h2 { font-size: 18px; font-weight: 600; color: var(--text); }
+.fps-header .tag {
+  display: inline-block; margin-top: 10px; padding: 4px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; background: rgba(255,255,255,0.06);
+  color: var(--accent-dim); border: 1px solid var(--border);
+}
+.fps-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  width: 100%; max-width: 380px; flex-shrink: 0;
+}
+.fps-btn {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 8px; cursor: pointer; text-align: center; transition: all 0.15s ease;
+}
+.fps-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+.fps-btn .v { font-size: 22px; font-weight: 700; color: var(--accent); display: block; }
+.fps-btn .l { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; display: block; }
+
+.back-btn {
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  font-family: var(--mono); font-size: 12px; padding: 10px 28px; border-radius: 8px;
+  cursor: pointer; flex-shrink: 0;
+}
+.back-btn:active { background: rgba(255,255,255,0.04); }
+
+#countdown { justify-content: center; align-items: center; background: var(--bg); overflow: hidden; }
+#countdown-number { font-size: 160px; font-weight: 700; color: var(--accent); opacity: 0; }
+#countdown-label { font-size: 13px; color: var(--text2); margin-top: 16px; letter-spacing: 2px; text-transform: uppercase; }
+
+#player { background: #000; justify-content: center; align-items: center; position: relative; overflow: hidden; }
+#player canvas { width: 100%; height: 100%; display: block; }
+.player-hud {
+  position: absolute; top: 0; left: 0; right: 0; padding: 10px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+  opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 10;
+}
+.player-hud.visible { opacity: 1; pointer-events: auto; }
+.player-hud .info { font-size: 11px; color: rgba(255,255,255,0.6); }
+.player-hud .hud-legend { display: flex; gap: 12px; align-items: center; }
+.player-hud .hl { display: flex; align-items: center; gap: 4px; font-size: 10px; }
+.player-hud .hl .d { width: 6px; height: 6px; border-radius: 50%; }
+.exit-btn {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; font-family: var(--mono); font-size: 12px; padding: 7px 16px; border-radius: 6px; cursor: pointer;
+}
+
+.offset-controls {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; z-index: 20;
+}
+.offset-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; font-family: var(--mono); font-size: 20px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.offset-btn:active { background: rgba(255,255,255,0.2); }
+.offset-label {
+  font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.5);
+  min-width: 110px; text-align: center;
+}
+
+/* ===== ANALYZER ===== */
+#analyzer-setup {
+  align-items: center; padding: 24px; gap: 20px;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+.az-header { text-align: center; padding-top: 12px; }
+.az-header h2 { font-size: 18px; font-weight: 600; color: var(--text); }
+.az-header p { font-size: 10px; color: var(--text2); margin-top: 6px; letter-spacing: 2px; text-transform: uppercase; }
+.az-section { width: 100%; max-width: 380px; }
+.az-section .label {
+  font-size: 10px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 8px; padding-left: 4px;
+}
+.az-fps-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%;
+}
+.az-fps-btn {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 4px; cursor: pointer; text-align: center; transition: all 0.15s ease;
+  font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text2);
+}
+.az-fps-btn.active { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); color: var(--accent); }
+.az-fps-btn:active { transform: scale(0.95); }
+
+.az-passes {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 16px;
+}
+.az-passes-val { font-size: 28px; font-weight: 700; color: var(--accent); min-width: 50px; text-align: center; }
+.az-passes-btn {
+  width: 40px; height: 40px; border-radius: 8px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--mono); font-size: 22px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.az-passes-btn:active { background: rgba(255,255,255,0.15); }
+.az-passes-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.az-info-card {
+  background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 8px; padding: 12px 14px; font-size: 11px; color: var(--text2); line-height: 1.6;
+}
+.az-info-card strong { color: var(--even); font-weight: 600; }
+
+.az-start-btn {
+  background: var(--accent); color: #000; border: none; border-radius: 8px;
+  padding: 14px 28px; font-family: var(--mono); font-size: 13px; font-weight: 700;
+  cursor: pointer; letter-spacing: 1px; text-transform: uppercase;
+  width: 100%; max-width: 380px;
+}
+.az-start-btn:active { background: rgba(255,255,255,0.85); transform: scale(0.98); }
+
+/* Analyzer run */
+#analyzer-run { background: #000; position: relative; overflow: hidden; }
+.az-video-wrap {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+#analyzer-video {
+  width: 100%; height: 100%; object-fit: cover; opacity: 0.55;
+}
+.az-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; padding: 20px;
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 5;
+}
+.az-overlay-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+  margin: -20px -20px 0; padding: 12px 16px;
+}
+.az-overlay-top .info { font-size: 11px; color: rgba(255,255,255,0.7); }
+.az-progress {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 20px;
+}
+.az-progress-counter {
+  font-size: 14px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase;
+}
+.az-progress-num {
+  font-size: 80px; font-weight: 700; color: #fff;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.8); line-height: 1;
+}
+.az-progress-bar {
+  width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
+}
+.az-progress-fill { height: 100%; background: var(--even); width: 0%; transition: width 0.3s ease; }
+.az-progress-label { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px; }
+
+.az-vus {
+  display: flex; flex-direction: column; gap: 6px;
+  background: rgba(0,0,0,0.5); border-radius: 8px; padding: 10px 12px;
+  margin-bottom: 8px; align-self: stretch;
+}
+.az-vu-row { display: flex; align-items: center; gap: 10px; }
+.az-vu-label { font-size: 9px; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; min-width: 38px; }
+.az-vu-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.az-vu-fill { height: 100%; background: var(--even); width: 0%; transition: width 0.08s linear; }
+.az-vu-fill.audio { background: var(--orange); }
+.az-vu-flash { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+.az-vu-flash.active { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
+
+.az-exit-btn {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  color: #fff; font-family: var(--mono); font-size: 12px; padding: 7px 14px;
+  border-radius: 6px; cursor: pointer;
+}
+
+/* Analyzer result */
+#analyzer-result {
+  align-items: center; justify-content: center; padding: 24px; gap: 18px;
+  background: var(--bg);
+}
+.az-result-mention {
+  font-size: 14px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
+  text-align: center;
+}
+.az-result-ms {
+  font-size: 64px; font-weight: 700; line-height: 1; text-align: center;
+}
+.az-result-frames {
+  font-size: 16px; color: var(--text); text-align: center;
+}
+.az-result-stddev {
+  font-size: 11px; color: var(--text2); text-align: center; line-height: 1.6;
+}
+.az-result-bar {
+  width: 100%; max-width: 300px; height: 8px; background: var(--bg2);
+  border-radius: 4px; overflow: hidden; position: relative;
+  border: 1px solid var(--border);
+}
+.az-result-bar-zone {
+  position: absolute; top: 0; bottom: 0;
+}
+.az-result-bar-zone.zone-green { background: rgba(34,197,94,0.15); }
+.az-result-bar-zone.zone-orange { background: rgba(249,115,22,0.15); }
+.az-result-bar-zone.zone-red { background: rgba(239,68,68,0.15); }
+.az-result-bar-marker {
+  position: absolute; top: -3px; bottom: -3px; width: 3px; background: #fff;
+  transition: left 0.4s ease;
+}
+.az-result-actions { display: flex; gap: 10px; margin-top: 10px; }
+.az-result-btn {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--mono); font-size: 12px; padding: 12px 22px;
+  border-radius: 8px; cursor: pointer;
+}
+.az-result-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+.az-result-btn:active { transform: scale(0.97); }
+
+.az-error {
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px; padding: 14px 16px; color: var(--red);
+  font-size: 12px; line-height: 1.6; max-width: 380px; text-align: left;
+}
+
+/* V8.1.1 — Toggle debug */
+.az-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 16px; cursor: pointer;
+}
+.az-toggle-label { font-size: 12px; color: var(--text); }
+.az-toggle-label small { display: block; color: var(--text2); font-size: 10px; margin-top: 2px; }
+.az-toggle-switch {
+  width: 44px; height: 24px; background: rgba(255,255,255,0.08);
+  border-radius: 12px; position: relative; transition: background 0.2s;
+}
+.az-toggle-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; background: #fff; border-radius: 50%;
+  transition: left 0.2s;
+}
+.az-toggle.active .az-toggle-switch { background: var(--even); }
+.az-toggle.active .az-toggle-switch::after { left: 23px; }
+
+/* V8.1.1 — Panneau debug overlay run */
+.az-debug-panel {
+  position: absolute; top: 56px; right: 12px;
+  background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px; padding: 10px 12px;
+  font-family: var(--mono); font-size: 10px; color: #fff;
+  line-height: 1.6; z-index: 12; min-width: 180px;
+  display: none;
+}
+.az-debug-panel.visible { display: block; }
+.az-debug-panel .row { display: flex; justify-content: space-between; gap: 12px; }
+.az-debug-panel .row .v { color: #fff; font-weight: 600; }
+.az-debug-panel .row .l { color: rgba(255,255,255,0.5); }
+.az-debug-panel .row .v.hot { color: var(--orange); }
+.az-debug-panel .row .v.ok { color: var(--green); }
+.az-debug-panel .sep { border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0; }
+
+@media (max-width: 520px) {
+  .patterns-grid { grid-template-columns: 1fr; max-width: 340px; }
+  .home-header { padding-top: 8px; }
+  .home-header h1 { font-size: 20px; }
+  #home { gap: 20px; padding: 16px; }
+  #fps-select { padding: 16px; gap: 20px; }
+  .az-result-ms { font-size: 52px; }
+}
+@media (min-width: 521px) and (max-width: 820px) {
+  .patterns-grid { grid-template-columns: repeat(2, 1fr); max-width: 560px; }
+}
+@media (orientation: landscape) {
+  #home { padding: 12px; gap: 12px; }
+  .home-header { padding-top: 4px; }
+  .home-header h1 { font-size: 18px; }
+  .home-header p { font-size: 10px; margin-top: 4px; }
+  .patterns-grid { max-width: 90%; grid-template-columns: repeat(5, 1fr); }
+  .pattern-info { padding: 8px 10px; }
+  .pattern-info h3 { font-size: 12px; }
+  .pattern-info p { font-size: 9px; }
+  #fps-select { padding: 12px; gap: 12px; }
+}
+@media (hover: hover) {
+  .pattern-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+  .fps-btn:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
+  .mode-card:hover { border-color: rgba(255,255,255,0.15); }
+}
+</style>
+</head>
+<body>
+
+<audio id="silent-audio" loop playsinline>
+  <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwmHAAAAAAD/+1DEAAAHAAGf9AAAIMAAMP/AAAAROIETRF8oCAgBBn/BwMf8HAfB8HwfB8EAQBA5/ggCAIHf/8uD7/5cH3+D4Pg+D4Pg+D4PvBAEAQOf4YAgZDIZBgGAwGDIMAwGB3/ygIAgCBz/BAEAQOf4PvyhkMgyCAYHf/KAgCAIHP8EAQBA5/g4GP+D4Pg+D4Ph///KAgCAIAhMf/lAQBAEDn+CAIAgc/wcDH/B8HwfB8HwfB8H//5QEAQBAEJn/8oCBkMhkGAYDAYMgwDAYHf/KAgCAIHP8EAQBA5/g4GP+XB9/g+D4Pg+D4Pg+D7/8oCAIAgCEz/+UBAyGQyDAMBgMGQYBgMDv/lAQBAEDn+CAIAgc/wfB8H3/y4Pv8HwfB8HwfB8H3/5QEAQBAEJj/8oCAIAgc/wQBAEDn+DgY/4Pg+D4Pg+D4Pg+//KAgCAIAhM//lAQMhkMgwDAYDBkGAYDA7/5QEAQOf4IAgCBz/B8Hwff/Lg+/wfB8HwfB8HwfB9/+UBAEAQBCYQAAAAAElJJJAAAAAA" type="audio/mp3">
+</audio>
+
+<!-- ===== ÉCRAN 0 — Choix du mode ===== -->
+<div id="home-mode" class="screen active">
+  <div class="home-mode-header">
+    <h1>Sync Test Pro</h1>
+    <p>A/V Toolkit · v8</p>
+  </div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="enterGenerator()">
+      <span class="badge dev1">Device 1 · Générateur</span>
+      <h2>Générateur de signal</h2>
+      <p>Affiche un pattern de test (compteur, mire, balle, NTP, delay test) avec bips synchronisés. À filmer pour valider la chaîne de diffusion.</p>
+    </div>
+    <div class="mode-card" onclick="enterAnalyzer()">
+      <span class="badge dev2">Device 2 · Analyseur</span>
+      <h2>Mesure de délai A/V</h2>
+      <p>Filme l'écran du Device 1 et capte son audio via micro. Mesure automatiquement le décalage son/image en ms et en images.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GÉNÉRATEUR — Home patterns ===== -->
+<div id="home" class="screen">
+  <div class="home-header">
+    <h1>Générateur</h1>
+    <p>Patterns de synchronisation</p>
+  </div>
+  <div class="section-label">Tests de synchronisation</div>
+  <div class="patterns-grid">
+    <div class="pattern-card" onclick="selectPattern('counter')">
+      <div class="pattern-thumb"><canvas id="thumb-counter"></canvas></div>
+      <div class="pattern-info"><h3>Compteur + Bip</h3><p>Flash et bip alterné chaque seconde</p></div>
+    </div>
+    <div class="pattern-card" onclick="selectPattern('bounce')">
+      <div class="pattern-thumb"><canvas id="thumb-bounce"></canvas></div>
+      <div class="pattern-info"><h3>Bouncing Ball</h3><p>Bip à chaque impact au sol</p></div>
+    </div>
+    <div class="pattern-card" onclick="selectPattern('ntp')">
+      <div class="pattern-thumb"><canvas id="thumb-ntp"></canvas></div>
+      <div class="pattern-info"><h3>Timecode NTP</h3><p>Aiguille rotative + TC — mesure de delay</p></div>
+    </div>
+    <div class="pattern-card" onclick="selectPattern('delaytest')">
+      <div class="pattern-thumb"><canvas id="thumb-delaytest"></canvas></div>
+      <div class="pattern-info"><h3>Delay Test ⚡</h3><p>Flash blanc + bip — pour mode Analyseur</p></div>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot even"></div>Sec. paires — 1000 Hz</div>
+    <div class="legend-item"><div class="legend-dot odd"></div>Sec. impaires — 500 Hz</div>
+  </div>
+  <button class="back-btn" onclick="goBackToHomeMode()">← Retour au menu</button>
+</div>
+
+<div id="fps-select" class="screen">
+  <div class="fps-header">
+    <h2>Framerate du projet</h2>
+    <span class="tag" id="tag-pattern">—</span>
+  </div>
+  <div class="fps-grid" id="fps-grid"></div>
+  <button class="back-btn" onclick="showScreen('home')">← Retour</button>
+</div>
+
+<div id="countdown" class="screen">
+  <div id="countdown-number">3</div>
+  <div id="countdown-label">Préparation…</div>
+</div>
+
+<div id="player" class="screen">
+  <canvas id="player-canvas"></canvas>
+  <div class="player-hud" id="hud">
+    <span class="info" id="hud-info">—</span>
+    <div class="hud-legend" id="hud-legend">
+      <div class="hl"><div class="d" style="background:var(--even)"></div><span style="color:rgba(255,255,255,0.4)">pair</span></div>
+      <div class="hl"><div class="d" style="background:var(--odd)"></div><span style="color:rgba(255,255,255,0.4)">impair</span></div>
+    </div>
+    <button class="exit-btn" onclick="stopPlayer()">✕ Quitter</button>
+  </div>
+  <div class="offset-controls" id="offset-controls" style="display:none">
+    <div class="offset-btn" onclick="adjustOffset(-10)">−</div>
+    <div class="offset-label" id="offset-label">Offset: 0 ms</div>
+    <div class="offset-btn" onclick="adjustOffset(+10)">+</div>
+  </div>
+</div>
+
+<!-- ===== ANALYSEUR ===== -->
+<div id="analyzer-setup" class="screen">
+  <div class="az-header">
+    <h2>Mode Analyseur</h2>
+    <p>Mesure du délai A/V</p>
+  </div>
+
+  <div class="az-section">
+    <div class="label">Framerate de référence</div>
+    <div class="az-fps-grid" id="az-fps-grid"></div>
+  </div>
+
+  <div class="az-section">
+    <div class="label">Nombre de passes (5 à 20) — plus = meilleure précision</div>
+    <div class="az-passes">
+      <button class="az-passes-btn" id="az-passes-minus" onclick="adjustPasses(-1)">−</button>
+      <div class="az-passes-val" id="az-passes-val">5</div>
+      <button class="az-passes-btn" id="az-passes-plus" onclick="adjustPasses(+1)">+</button>
+    </div>
+  </div>
+
+  <div class="az-section">
+    <div class="az-info-card">
+      <strong>Setup recommandé :</strong><br>
+      1. Lance "Delay Test" sur le Device 1 (volume audible).<br>
+      2. Pointe la caméra du Device 2 sur l'écran du Device 1 (cadrer plein écran, distance ~30 cm).<br>
+      3. Évite l'éclairage direct (lumière ambiante stable).<br>
+      4. Appuie sur Démarrer — la mesure prend ~<span id="az-eta">5</span> s.
+    </div>
+  </div>
+
+  <div class="az-section">
+    <div class="az-toggle" id="az-debug-toggle" onclick="toggleDebug()">
+      <div class="az-toggle-label">
+        Mode debug
+        <small>Affiche luminance, RMS et seuils en temps réel</small>
+      </div>
+      <div class="az-toggle-switch"></div>
+    </div>
+  </div>
+
+  <button class="az-start-btn" onclick="startAnalyzerRun()">▶ Démarrer la mesure</button>
+  <button class="back-btn" onclick="goBackToHomeMode()">← Retour au menu</button>
+</div>
+
+<div id="analyzer-run" class="screen">
+  <div class="az-video-wrap">
+    <video id="analyzer-video" playsinline muted></video>
+  </div>
+  <div class="az-overlay">
+    <div class="az-overlay-top">
+      <span class="info" id="az-run-info">— · 25 fps · 5 passes</span>
+      <button class="az-exit-btn" onclick="abortAnalyzer()">✕ Annuler</button>
+    </div>
+    <div class="az-progress">
+      <div class="az-progress-counter">Passe</div>
+      <div class="az-progress-num"><span id="az-pass-num">0</span> / <span id="az-pass-target">5</span></div>
+      <div class="az-progress-bar"><div class="az-progress-fill" id="az-progress-fill"></div></div>
+      <div class="az-progress-label" id="az-status">En attente du signal…</div>
+    </div>
+    <div class="az-vus">
+      <div class="az-vu-row">
+        <span class="az-vu-label">VIDÉO</span>
+        <div class="az-vu-bar"><div class="az-vu-fill" id="az-vu-video"></div></div>
+        <span class="az-vu-flash" id="az-vu-flash"></span>
+      </div>
+      <div class="az-vu-row">
+        <span class="az-vu-label">AUDIO</span>
+        <div class="az-vu-bar"><div class="az-vu-fill audio" id="az-vu-audio"></div></div>
+        <span class="az-vu-flash" id="az-vu-bip"></span>
+      </div>
+    </div>
+  </div>
+  <!-- V8.1.1 — Panneau debug -->
+  <div class="az-debug-panel" id="az-debug-panel">
+    <div class="row"><span class="l">LUM</span><span class="v" id="dbg-lum">—</span></div>
+    <div class="row"><span class="l">LUM seuil</span><span class="v" id="dbg-lum-thr">—</span></div>
+    <div class="row"><span class="l">RMS</span><span class="v" id="dbg-rms">—</span></div>
+    <div class="row"><span class="l">RMS seuil</span><span class="v" id="dbg-rms-thr">—</span></div>
+    <div class="sep"></div>
+    <div class="row"><span class="l">Flashes</span><span class="v" id="dbg-flashes">0</span></div>
+    <div class="row"><span class="l">Bips</span><span class="v" id="dbg-bips">0</span></div>
+    <div class="sep"></div>
+    <div class="row"><span class="l">Dernier Δ</span><span class="v" id="dbg-last-delta">—</span></div>
+  </div>
+</div>
+
+<div id="analyzer-result" class="screen">
+  <div class="az-result-mention" id="result-mention">—</div>
+  <div class="az-result-ms" id="result-ms">— ms</div>
+  <div class="az-result-frames" id="result-frames">— images</div>
+  <div class="az-result-bar">
+    <div class="az-result-bar-zone zone-green" id="bar-green"></div>
+    <div class="az-result-bar-zone zone-orange" id="bar-orange-l"></div>
+    <div class="az-result-bar-zone zone-orange" id="bar-orange-r"></div>
+    <div class="az-result-bar-zone zone-red" id="bar-red-l"></div>
+    <div class="az-result-bar-zone zone-red" id="bar-red-r"></div>
+    <div class="az-result-bar-marker" id="bar-marker"></div>
+  </div>
+  <div class="az-result-stddev" id="result-stddev">—</div>
+  <div class="az-result-actions">
+    <button class="az-result-btn" onclick="goBackToHomeMode()">Menu</button>
+    <button class="az-result-btn primary" onclick="restartAnalyzer()">↻ Nouvelle mesure</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ========== CONSTANTES PARTAGÉES ==========
+const FREQ_EVEN_COUNTER=1000, FREQ_ODD_COUNTER=500;
+const FREQ_EVEN_BOUNCE=800, FREQ_ODD_BOUNCE=400;
+const COL_EVEN='#3b82f6', COL_ODD='#f97316';
+const COL_EVEN_DIM='rgba(59,130,246,', COL_ODD_DIM='rgba(249,115,22,';
+const BEEP_DUR=0.05, SCHEDULE_AHEAD=5, BEEP_GAIN=1.6;
+// V8.1.1 — Bip Delay Test boosté +6 dB pour détection micro à distance (~20 cm écran)
+const BEEP_GAIN_DELAYTEST = 3.2;  // ≈ +6 dB vs BEEP_GAIN
+const BEEP_DUR_DELAYTEST = 0.05;  // 50 ms (vs 30 ms en v8.1) — plus de présence audio
+
+const ALL_FPS=[
+  {fps:24,scan:'p'},{fps:25,scan:'p'},{fps:30,scan:'p'},
+  {fps:50,scan:'i'},{fps:50,scan:'p'},
+  {fps:60,scan:'i'},{fps:60,scan:'p'},
+  {fps:100,scan:'p'},{fps:120,scan:'p'}
+];
+const NTP_FPS=[{fps:25,scan:'p'},{fps:30,scan:'p'},{fps:50,scan:'p'},{fps:60,scan:'p'},{fps:120,scan:'p'}];
+const ANALYZER_FPS=[23.98,24,25,29.97,30,50,59.94,60];
+
+// ========== ÉTAT GÉNÉRATEUR ==========
+let pattern=null,fps=null,scan=null;
+let audioCtx=null,masterGain=null;
+let animId=null,playing=false,hudTimer=null;
+let audioT0=0,perfT0=0,scheduledUpTo=-1;
+let silentAudio=null,mediaSessionActive=false;
+
+// NTP: wall clock to audio clock mapping
+let ntpWallT0=0, ntpAudioT0=0, ntpScheduledUpToSec=-1;
+let ntpOffsetMs = 0;
+
+const names={
+  counter:'Compteur + Bip',bounce:'Bouncing Ball',
+  ntp:'Timecode NTP',delaytest:'Delay Test'
+};
+
+function isEven(s){return s%2===0;}
+function colFor(s){return isEven(s)?COL_EVEN:COL_ODD;}
+function colDim(s,a){return(isEven(s)?COL_EVEN_DIM:COL_ODD_DIM)+a+')';}
+
+// ========== AUDIO iOS (partagé) ==========
+function activateMediaSession(){
+  if(mediaSessionActive)return;silentAudio=document.getElementById('silent-audio');
+  if(silentAudio){silentAudio.volume=0.01;const p=silentAudio.play();if(p)p.catch(()=>{});mediaSessionActive=true;}
+}
+function deactivateMediaSession(){if(silentAudio&&mediaSessionActive){silentAudio.pause();mediaSessionActive=false;}}
+function ensureAudio(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+}
+function unlockAndActivate(){
+  ensureAudio();
+  const buf=audioCtx.createBuffer(1,1,22050);const src=audioCtx.createBufferSource();
+  src.buffer=buf;src.connect(audioCtx.destination);src.start(0);
+  // Active le silent MP3 uniquement si on n'est pas en mode analyseur
+  if(analyzerState==='idle') activateMediaSession();
+}
+document.addEventListener('touchstart',unlockAndActivate,true);
+document.addEventListener('mousedown',unlockAndActivate,true);
+
+function createMasterGain(){
+  killAudio();masterGain=audioCtx.createGain();masterGain.gain.value=1;masterGain.connect(audioCtx.destination);
+}
+function killAudio(){if(masterGain){try{masterGain.disconnect();}catch(e){}masterGain=null;}}
+
+function scheduleBeep(time,freq,dur,gain){
+  if(!audioCtx||!masterGain)return;
+  const gv = gain != null ? gain : BEEP_GAIN;
+  try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(gv,time);
+  g.gain.exponentialRampToValueAtTime(0.001,time+dur);o.connect(g);g.connect(masterGain);
+  o.start(time);o.stop(time+dur+0.02);}catch(e){}
+}
+function beepNow(freq,dur){
+  ensureAudio();try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.value=freq;const t=audioCtx.currentTime;
+  g.gain.setValueAtTime(BEEP_GAIN,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+dur+0.02);}catch(e){}
+}
+
+// Scheduling for relative-time patterns (counter, bounce, delaytest)
+function scheduleBeepsBatch(from,to){
+  for(let s=from;s<=to;s++){const bt=audioT0+s;if(bt<audioCtx.currentTime-0.01)continue;
+  let freq;
+  if(pattern==='bounce')freq=isEven(s)?FREQ_EVEN_BOUNCE:FREQ_ODD_BOUNCE;
+  else freq=isEven(s)?FREQ_EVEN_COUNTER:FREQ_ODD_COUNTER;
+  // V8.1.1 — Delay Test : bip 50 ms boosté +6 dB pour détection micro à distance
+  const isDelay = (pattern==='delaytest');
+  const dur = isDelay ? BEEP_DUR_DELAYTEST : BEEP_DUR;
+  const gain = isDelay ? BEEP_GAIN_DELAYTEST : BEEP_GAIN;
+  scheduleBeep(bt,freq,dur,gain);}
+  scheduledUpTo=to;
+}
+function maintainSchedule(elSec){const t=Math.floor(elSec)+SCHEDULE_AHEAD;if(t>scheduledUpTo)scheduleBeepsBatch(scheduledUpTo+1,t);}
+
+// Scheduling for NTP: beeps synced to wall clock seconds
+function initNtpBeeps(){
+  ntpWallT0 = Date.now();
+  ntpAudioT0 = audioCtx.currentTime;
+  ntpScheduledUpToSec = -1;
+  maintainNtpBeeps();
+}
+function maintainNtpBeeps(){
+  if(!audioCtx||!masterGain) return;
+  const nowWall = Date.now();
+  const nowSec = Math.floor(nowWall / 1000);
+  const targetSec = nowSec + SCHEDULE_AHEAD;
+  if(targetSec <= ntpScheduledUpToSec) return;
+  const startSec = Math.max(nowSec, ntpScheduledUpToSec + 1);
+  for(let wallSec = startSec; wallSec <= targetSec; wallSec++){
+    const wallMs = wallSec * 1000;
+    const deltaFromT0 = (wallMs - ntpWallT0) / 1000;
+    const audioTime = ntpAudioT0 + deltaFromT0;
+    if(audioTime < audioCtx.currentTime - 0.01) continue;
+    const localDate = new Date(wallMs);
+    const localSec = localDate.getSeconds();
+    const freq = isEven(localSec) ? FREQ_EVEN_COUNTER : FREQ_ODD_COUNTER;
+    scheduleBeep(audioTime, freq, BEEP_DUR);
+  }
+  ntpScheduledUpToSec = targetSec;
+}
+
+function haptic(){try{navigator.vibrate?.(25);}catch(e){}}
+
+// Timecodes
+function smpte(frames,f){
+  const ef=Math.ceil(f),fr=frames%ef;const ts=Math.floor(frames/ef);
+  const s=ts%60,m=Math.floor(ts/60)%60,h=Math.floor(ts/3600)%24;
+  return[h,m,s,fr].map(v=>String(v).padStart(2,'0')).join(':');
+}
+function ntpTimecode(now,fpsVal,offsetMs){
+  const adjusted=new Date(now.getTime()+offsetMs);
+  const h=adjusted.getHours(),m=adjusted.getMinutes(),s=adjusted.getSeconds(),ms=adjusted.getMilliseconds();
+  const frame=Math.floor(ms/(1000/fpsVal));
+  return{tc:[h,m,s,frame].map(v=>String(v).padStart(2,'0')).join(':'),h,m,s,frame,ms};
+}
+
+// Offset NTP
+function adjustOffset(delta){ntpOffsetMs+=delta;updateOffsetLabel();}
+function updateOffsetLabel(){
+  const el=document.getElementById('offset-label');
+  const sign=ntpOffsetMs>=0?'+':'';
+  el.textContent=`Offset: ${sign}${ntpOffsetMs} ms`;
+}
+
+// ========== NAVIGATION ==========
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function enterGenerator(){
+  // Mode Générateur : on réactive le silent MP3 au prochain tap
+  showScreen('home');
+}
+function enterAnalyzer(){
+  // Mode Analyseur : pas de son émis, on désactive silent MP3
+  deactivateMediaSession();
+  buildAnalyzerSetupUI();
+  showScreen('analyzer-setup');
+}
+function goBackToHomeMode(){
+  // Cleanup générateur
+  if(playing) stopPlayer();
+  // Cleanup analyseur
+  if(analyzerState!=='idle') abortAnalyzer(true);
+  showScreen('home-mode');
+}
+
+function selectPattern(p){pattern=p;document.getElementById('tag-pattern').textContent=names[p];buildFpsGrid();showScreen('fps-select');}
+function buildFpsGrid(){
+  const grid=document.getElementById('fps-grid');const list=pattern==='ntp'?NTP_FPS:ALL_FPS;
+  grid.innerHTML='';list.forEach(item=>{const btn=document.createElement('div');btn.className='fps-btn';
+  btn.onclick=()=>selectFps(item.fps,item.scan);
+  btn.innerHTML=`<span class="v">${item.fps}</span><span class="l">${item.scan==='i'?'entrelacé':'progressif'}</span>`;
+  grid.appendChild(btn);});
+}
+function selectFps(f,s){fps=f;scan=s;if(pattern==='ntp')startNtpPlayer();else startCountdown();}
+
+// ========== THUMBNAILS ==========
+function drawThumbs(){
+  let c,x;
+  c=document.getElementById('thumb-counter');x=c.getContext('2d');
+  c.width=320;c.height=180;x.fillStyle='#09090b';x.fillRect(0,0,320,180);
+  x.beginPath();x.arc(160,78,44,0,Math.PI*2);x.strokeStyle='rgba(255,255,255,0.08)';x.lineWidth=2;x.stroke();
+  x.beginPath();x.arc(160,78,44,-Math.PI/2,Math.PI*0.8);x.strokeStyle=COL_EVEN;x.lineWidth=2;x.stroke();
+  x.font='700 52px IBM Plex Mono, monospace';x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';
+  x.fillText('04',160,78);x.font='500 11px IBM Plex Mono, monospace';x.fillStyle='#444';x.fillText('00:00:04:00',160,152);
+
+  c=document.getElementById('thumb-bounce');x=c.getContext('2d');
+  c.width=320;c.height=180;x.fillStyle='#09090b';x.fillRect(0,0,320,180);
+  x.strokeStyle='rgba(255,255,255,0.08)';x.lineWidth=1;x.beginPath();x.moveTo(60,138);x.lineTo(260,138);x.stroke();
+  x.beginPath();x.ellipse(160,140,16,3,0,0,Math.PI*2);x.fillStyle='rgba(255,255,255,0.05)';x.fill();
+  x.beginPath();x.arc(160,72,16,0,Math.PI*2);x.fillStyle='#fff';x.fill();
+  x.font='500 11px IBM Plex Mono, monospace';x.fillStyle='#444';x.textAlign='center';x.fillText('00:00:03:12',160,168);
+
+  c=document.getElementById('thumb-ntp');x=c.getContext('2d');
+  c.width=320;c.height=180;x.fillStyle='#000';x.fillRect(0,0,320,180);
+  const cx2=160,cy2=75,r2=45;
+  x.beginPath();x.arc(cx2,cy2,r2,0,Math.PI*2);x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=1.5;x.stroke();
+  for(let i=0;i<10;i++){const a=-Math.PI/2+i*(Math.PI*2/10);
+    x.beginPath();x.moveTo(cx2+Math.cos(a)*(r2-6),cy2+Math.sin(a)*(r2-6));x.lineTo(cx2+Math.cos(a)*r2,cy2+Math.sin(a)*r2);
+    x.strokeStyle='rgba(255,255,255,0.25)';x.lineWidth=1.5;x.stroke();}
+  const na=-Math.PI/2+0.2*Math.PI*2;
+  x.beginPath();x.moveTo(cx2,cy2);x.lineTo(cx2+Math.cos(na)*(r2-10),cy2+Math.sin(na)*(r2-10));
+  x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+  x.beginPath();x.arc(cx2,cy2,3,0,Math.PI*2);x.fillStyle='#fff';x.fill();
+  x.font='700 16px IBM Plex Mono, monospace';x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';
+  x.fillText('14:32:07:05',160,148);
+  x.font='400 9px IBM Plex Mono, monospace';x.fillStyle='#333';x.fillText('NTP · 1° ≈ 3ms',160,168);
+
+  // Thumbnail Delay Test : fond noir + flash blanc partiel + indication
+  c=document.getElementById('thumb-delaytest');x=c.getContext('2d');
+  c.width=320;c.height=180;
+  // Mi-noir, mi-flash blanc pour illustrer le concept
+  x.fillStyle='#000';x.fillRect(0,0,320,180);
+  x.fillStyle='#fff';x.fillRect(160,0,160,180);
+  x.font='700 22px IBM Plex Mono, monospace';
+  x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle='#fff';x.fillText('FLASH',80,82);
+  x.fillStyle='#000';x.fillText('+ BIP',240,82);
+  // Petite icône éclair
+  x.font='700 14px IBM Plex Mono, monospace';
+  x.fillStyle='rgba(255,255,255,0.4)';x.fillText('⚡',80,118);
+  x.fillStyle='rgba(0,0,0,0.4)';x.fillText('⚡',240,118);
+  x.font='500 10px IBM Plex Mono, monospace';
+  x.fillStyle='rgba(255,255,255,0.5)';x.fillText('1000/500 Hz · 2 frames',80,148);
+  x.fillStyle='rgba(0,0,0,0.5)';x.fillText('pour Analyseur',240,148);
+}
+
+// ========== COUNTDOWN ==========
+function startCountdown(){
+  showScreen('countdown');ensureAudio();activateMediaSession();
+  try{screen.orientation?.lock?.('landscape').catch(()=>{});}catch(e){}
+  try{const el=document.documentElement;(el.requestFullscreen||el.webkitRequestFullscreen)?.call(el)?.catch(()=>{});}catch(e){}
+  const numEl=document.getElementById('countdown-number'),labelEl=document.getElementById('countdown-label');
+  let count=3;
+  function tick(){
+    numEl.textContent=count;numEl.style.opacity='0';numEl.style.transform='scale(1.3)';numEl.style.transition='none';
+    void numEl.offsetWidth;numEl.style.transition='opacity 0.25s ease-out, transform 0.25s ease-out';
+    numEl.style.opacity='1';numEl.style.transform='scale(1)';beepNow(660,0.06);haptic();
+    labelEl.textContent=count===3?'Préparation…':count===2?'Attention…':'C\'est parti !';
+    count--;if(count>=0)setTimeout(tick,1000);else setTimeout(startPlayer,400);
+  }
+  tick();
+}
+
+// ========== PLAYER (générateur) ==========
+// SYNC AUDIT V8.1 — Horloge unique : audioCtx.currentTime
+// Le rendu visuel ET le scheduling audio sont basés sur la même horloge matérielle audio.
+// → Élimine tout drift potentiel entre performance.now() (système) et audioCtx (audio).
+// → Garantit que le flash visuel à la frame de la seconde N coïncide exactement avec le bip programmé à audioT0+N.
+function startPlayer(){
+  showScreen('player');ensureAudio();activateMediaSession();createMasterGain();
+  const cv=document.getElementById('player-canvas'),ctx=cv.getContext('2d');
+  document.getElementById('hud-info').textContent=`${names[pattern]}  ·  ${fps}${scan}`;
+  document.getElementById('hud-legend').style.display='flex';
+  document.getElementById('offset-controls').style.display='none';
+  playing=true;audioT0=audioCtx.currentTime;perfT0=performance.now();scheduledUpTo=-1;
+  scheduleBeepsBatch(0,SCHEDULE_AHEAD);
+  let lastHapticSec=-1;setupHud(cv);
+  const dpr=window.devicePixelRatio||1;
+  function resize(){cv.width=window.innerWidth*dpr;cv.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  resize();window.addEventListener('resize',resize);
+  const fd=1000/fps;
+  function render(){
+    if(!playing)return;
+    // V8.1 : horloge audio matérielle = référence unique pour visuel + audio
+    const elapsedSec = audioCtx.currentTime - audioT0;
+    const elapsed = elapsedSec * 1000; // ms
+    const totalF = Math.floor(elapsed/fd);
+    const sec = Math.floor(elapsedSec);
+    const frac = elapsedSec - sec; // 0..1 dans la seconde courante
+    const W=window.innerWidth,H=window.innerHeight;
+    maintainSchedule(elapsedSec);
+    if(sec!==lastHapticSec){lastHapticSec=sec;haptic();}
+    ctx.clearRect(0,0,W,H);
+    switch(pattern){
+      case'counter':renderCounter(ctx,W,H,totalF,sec,frac);break;
+      case'bounce':renderBounce(ctx,W,H,totalF,sec,frac);break;
+      case'delaytest':renderDelayTest(ctx,W,H,totalF,sec,frac);break;
+    }
+    animId=requestAnimationFrame(render);
+  }
+  animId=requestAnimationFrame(render);
+}
+
+// NTP Player
+function startNtpPlayer(){
+  showScreen('player');
+  ensureAudio(); activateMediaSession(); createMasterGain();
+  try{screen.orientation?.lock?.('landscape').catch(()=>{});}catch(e){}
+  try{const el=document.documentElement;(el.requestFullscreen||el.webkitRequestFullscreen)?.call(el)?.catch(()=>{});}catch(e){}
+  const cv=document.getElementById('player-canvas'),ctx=cv.getContext('2d');
+  document.getElementById('hud-info').textContent=`Timecode NTP  ·  ${fps}${scan}`;
+  document.getElementById('hud-legend').style.display='none';
+  document.getElementById('offset-controls').style.display='flex';
+  updateOffsetLabel();
+  playing=true;
+  initNtpBeeps();
+  let lastHapticSec=-1;setupHud(cv);
+  const dpr=window.devicePixelRatio||1;
+  function resize(){cv.width=window.innerWidth*dpr;cv.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  resize();window.addEventListener('resize',resize);
+  function render(){
+    if(!playing)return;
+    const now=new Date();
+    const W=window.innerWidth,H=window.innerHeight;
+    maintainNtpBeeps();
+    const curSec=now.getSeconds();
+    if(curSec!==lastHapticSec){lastHapticSec=curSec;haptic();}
+    ctx.clearRect(0,0,W,H);
+    renderNtp(ctx,W,H,now);
+    animId=requestAnimationFrame(render);
+  }
+  animId=requestAnimationFrame(render);
+}
+
+function setupHud(cv){
+  const hud=document.getElementById('hud');
+  function showHud(){hud.classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>hud.classList.remove('visible'),3500);}
+  showHud();cv.onclick=showHud;
+}
+
+function stopPlayer(){
+  playing=false;if(animId)cancelAnimationFrame(animId);
+  killAudio();deactivateMediaSession();scheduledUpTo=-1;ntpScheduledUpToSec=-1;
+  document.getElementById('offset-controls').style.display='none';
+  try{(document.exitFullscreen||document.webkitExitFullscreen)?.call(document)?.catch(()=>{});}catch(e){}
+  try{screen.orientation?.unlock?.();}catch(e){}
+  showScreen('home');
+}
+
+// ========== RENDU NTP ==========
+// SYNC AUDIT V8.1
+//   Cas particulier : Le timecode NTP doit refléter la wall clock (Date.now()),
+//   donc le rendu visuel utilise new Date() (pas audioCtx.currentTime).
+//   Mapping wall→audio fait UNE FOIS à l'init (ntpWallT0, ntpAudioT0).
+//   Limitation connue : drift très lent (~ms par minute) entre Date.now() et audioCtx
+//   peut décaler le bip par rapport au timecode affiché. En usage broadcast court
+//   (< 30 min), drift cumulé < 10 ms. Acceptable. Si besoin, refresh mapping
+//   à implémenter en V8.2.
+function renderNtp(ctx,W,H,now){
+  ctx.fillStyle='#000000';ctx.fillRect(0,0,W,H);
+  const{tc,h,m,s,frame,ms}=ntpTimecode(now,fps,ntpOffsetMs);
+  const msNorm=ms/1000;
+  const isLandscape=W>H;
+  const clockR=Math.min(W,H)*(isLandscape?0.32:0.22);
+  const clockCx=isLandscape?W*0.32:W*0.5;
+  const clockCy=isLandscape?H*0.46:H*0.35;
+  const tcCx=isLandscape?W*0.72:W*0.5;
+  const tcCy=isLandscape?H*0.43:H*0.73;
+  ctx.beginPath();ctx.arc(clockCx,clockCy,clockR,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1.5;ctx.stroke();
+  for(let i=0;i<50;i++){
+    const angle=-Math.PI/2+(i/50)*Math.PI*2;
+    const isMajor=i%5===0;
+    const innerR=isMajor?clockR-clockR*0.14:clockR-clockR*0.07;
+    ctx.beginPath();
+    ctx.moveTo(clockCx+Math.cos(angle)*innerR,clockCy+Math.sin(angle)*innerR);
+    ctx.lineTo(clockCx+Math.cos(angle)*clockR,clockCy+Math.sin(angle)*clockR);
+    ctx.strokeStyle=isMajor?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.12)';
+    ctx.lineWidth=isMajor?1.5:0.8;ctx.stroke();
+    if(isMajor){
+      const labelR=clockR-clockR*0.24;
+      const labelSize=Math.max(9,clockR*0.11);
+      ctx.font=`500 ${labelSize}px IBM Plex Mono, monospace`;
+      ctx.fillStyle='rgba(255,255,255,0.25)';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(String((i/5)*100),clockCx+Math.cos(angle)*labelR,clockCy+Math.sin(angle)*labelR);
+    }
+  }
+  const trailStart=-Math.PI/2+Math.max(0,msNorm-0.08)*Math.PI*2;
+  const trailEnd=-Math.PI/2+msNorm*Math.PI*2;
+  ctx.beginPath();ctx.arc(clockCx,clockCy,clockR*0.7,trailStart,trailEnd);
+  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=clockR*0.06;
+  ctx.lineCap='round';ctx.stroke();ctx.lineCap='butt';
+  const needleAngle=-Math.PI/2+msNorm*Math.PI*2;
+  const needleLen=clockR*0.78,needleTailLen=clockR*0.15;
+  ctx.beginPath();
+  ctx.moveTo(clockCx-Math.cos(needleAngle)*needleTailLen+1,clockCy-Math.sin(needleAngle)*needleTailLen+1);
+  ctx.lineTo(clockCx+Math.cos(needleAngle)*needleLen+1,clockCy+Math.sin(needleAngle)*needleLen+1);
+  ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=3;ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(clockCx-Math.cos(needleAngle)*needleTailLen,clockCy-Math.sin(needleAngle)*needleTailLen);
+  ctx.lineTo(clockCx+Math.cos(needleAngle)*needleLen,clockCy+Math.sin(needleAngle)*needleLen);
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(clockCx+Math.cos(needleAngle)*needleLen,clockCy+Math.sin(needleAngle)*needleLen,3,0,Math.PI*2);
+  ctx.fillStyle='#ffffff';ctx.fill();
+  ctx.beginPath();ctx.arc(clockCx,clockCy,4,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+  ctx.beginPath();ctx.arc(clockCx,clockCy,2,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();
+  const msSize=Math.max(12,clockR*0.18);
+  ctx.font=`700 ${msSize}px IBM Plex Mono, monospace`;
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(`${String(ms).padStart(3,'0')} ms`,clockCx,clockCy+clockR*0.42);
+  if(msNorm<0.03){
+    const alpha=0.3*(1-msNorm/0.03);
+    ctx.beginPath();ctx.arc(clockCx,clockCy,clockR+3,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(255,255,255,${alpha})`;ctx.lineWidth=3;ctx.stroke();
+  }
+  const secColor = colFor(s);
+  ctx.beginPath();ctx.arc(clockCx,clockCy-clockR*0.25,clockR*0.06,0,Math.PI*2);
+  ctx.fillStyle=secColor;ctx.fill();
+  const tcSize=Math.min(W*0.09,H*0.18,isLandscape?W*0.07:W*0.11);
+  ctx.font=`700 ${tcSize}px IBM Plex Mono, monospace`;ctx.fillStyle='#ffffff';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tc,tcCx,tcCy);
+  const barW=tcSize*4.5,barH=2;
+  const barX=tcCx-barW/2,barY=tcCy+tcSize*0.55;
+  ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fillRect(barX,barY,barW,barH);
+  ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillRect(barX,barY,barW*(frame/fps),barH);
+  const labelSize=Math.min(W*0.022,H*0.035);
+  ctx.font=`500 ${labelSize}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.fillText(`${fps}${scan}  ·  NTP  ·  Frame ${String(frame).padStart(2,'0')} / ${fps}`,tcCx,barY+labelSize*2);
+  ctx.font=`600 ${labelSize*0.85}px IBM Plex Mono, monospace`;
+  ctx.fillStyle=colDim(s,'0.5');
+  const freqLabel=isEven(s)?`PAIR  ·  ${FREQ_EVEN_COUNTER} Hz`:`IMPAIR  ·  ${FREQ_ODD_COUNTER} Hz`;
+  ctx.fillText(freqLabel,tcCx,barY+labelSize*3.5);
+  ctx.font=`400 ${labelSize*0.8}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.08)';
+  const dateStr=now.toLocaleDateString('fr-FR',{weekday:'short',year:'numeric',month:'2-digit',day:'2-digit'});
+  ctx.fillText(dateStr.toUpperCase(),tcCx,barY+labelSize*5);
+  ctx.font=`400 ${Math.max(9,labelSize*0.7)}px IBM Plex Mono, monospace`;
+  ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,0.07)';ctx.fillText('NTP SYNC',14,22);
+  ctx.textAlign='right';
+  const offsetStr=ntpOffsetMs!==0?`  ·  Offset ${ntpOffsetMs>0?'+':''}${ntpOffsetMs}ms`:'';
+  ctx.fillText(`1° ≈ 2.8 ms${offsetStr}`,W-14,22);
+}
+
+// ========== RENDU COUNTER ==========
+// SYNC AUDIT V8.1
+//   Bip programmé : audioT0 + s        (seconde s exacte, horloge audio matérielle)
+//   Flash visuel  : actif si frac<0.07 (~70 ms autour de la seconde, fenêtre humaine)
+//   Référence visuelle : audioCtx.currentTime (même horloge que le bip)
+//   → Co-localisation garantie : flash et bip alignés à la précision audio (~0.02 ms)
+function renderCounter(ctx,W,H,totalF,sec,frac){
+  const flash=frac<0.07;const even=isEven(sec);const col=colFor(sec);
+  ctx.fillStyle=flash?(even?'#1a2e5a':'#3d200a'):'#09090b';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H*0.43,r=Math.min(W,H)*0.17;
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=flash?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.06)';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+Math.PI*2*frac);ctx.strokeStyle=flash?'rgba(255,255,255,0.5)':col;ctx.lineWidth=2.5;ctx.stroke();
+  const fs=Math.min(W*0.18,H*0.32);ctx.font=`700 ${fs}px IBM Plex Mono, monospace`;ctx.fillStyle='#ffffff';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(sec%60).padStart(2,'0'),cx,cy);
+  ctx.beginPath();ctx.arc(cx,cy+fs*0.42,5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+  const ts=Math.min(W*0.035,H*0.05);ctx.font=`500 ${ts}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.3)';
+  ctx.fillText(smpte(totalF,fps),cx,cy+r+ts*2);
+  ctx.font=`400 ${ts*0.7}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.fillText(`Frame ${totalF}  ·  ${fps}${scan}`,cx,cy+r+ts*3.4);
+  ctx.font=`600 ${ts*0.65}px IBM Plex Mono, monospace`;ctx.fillStyle=colDim(sec,'0.6');
+  ctx.fillText(even?`PAIR  ·  ${FREQ_EVEN_COUNTER} Hz`:`IMPAIR  ·  ${FREQ_ODD_COUNTER} Hz`,cx,cy+r+ts*4.8);
+  ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fillRect(0,H-3,W,3);
+  ctx.fillStyle=colDim(sec,'0.4');ctx.fillRect(0,H-3,W*frac,3);
+}
+
+// ========== RENDU BOUNCING BALL ==========
+// SYNC AUDIT V8.1
+//   Bip programmé    : audioT0 + s              (impact = seconde s exacte)
+//   Position balle   : ballY = groundY quand frac=0 → IMPACT = seconde exacte
+//   Animation impact : isImpact si frac<0.055   (ripple visuel ~55 ms)
+//   Référence visuelle : audioCtx.currentTime
+//   → La balle touche le sol au moment précis où le bip est joué
+function renderBounce(ctx,W,H,totalF,sec,frac){
+  const even=isEven(sec);const col=colFor(sec);ctx.fillStyle='#09090b';ctx.fillRect(0,0,W,H);
+  const cx=W/2,groundY=H*0.70,ballR=Math.min(W,H)*0.05,peakY=H*0.10+ballR;
+  const height=1-Math.pow(2*frac-1,2);const ballY=groundY-(groundY-peakY)*height;const isImpact=frac<0.055;
+  ctx.strokeStyle=isImpact?colDim(sec,'0.6'):'rgba(255,255,255,0.06)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(W*0.12,groundY);ctx.lineTo(W*0.88,groundY);ctx.stroke();
+  if(isImpact){const p=frac/0.055;ctx.strokeStyle=colDim(sec,String(0.3*(1-p)));ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.ellipse(cx,groundY,ballR*1.2+p*55,2+p*6,0,0,Math.PI*2);ctx.stroke();
+    if(p>0.3){const p2=(p-0.3)/0.7;ctx.strokeStyle=colDim(sec,String(0.15*(1-p2)));ctx.lineWidth=1;
+    ctx.beginPath();ctx.ellipse(cx,groundY,ballR*1.5+p2*80,2+p2*8,0,0,Math.PI*2);ctx.stroke();}
+  }
+  const dist=(groundY-ballY)/(groundY-peakY),sSc=1-dist*0.5;
+  ctx.beginPath();ctx.ellipse(cx,groundY+2,ballR*sSc*1.1,Math.max(2,4*sSc),0,0,Math.PI*2);
+  ctx.fillStyle=`rgba(255,255,255,${0.08*sSc})`;ctx.fill();
+  let sx=1,sy=1;if(frac<0.035){const sq=1-frac/0.035;sx=1+sq*0.3;sy=1-sq*0.25;}
+  else if(frac<0.09){const st=(frac-0.035)/0.055;sx=1-st*0.06;sy=1+st*0.06;}
+  if(isImpact){const a=0.12*(1-frac/0.055);ctx.beginPath();ctx.arc(cx,groundY,ballR*3,0,Math.PI*2);ctx.fillStyle=colDim(sec,String(a));ctx.fill();}
+  ctx.save();ctx.translate(cx,ballY);ctx.scale(sx,sy);
+  ctx.beginPath();ctx.arc(0,0,ballR,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+  if(isImpact){ctx.beginPath();ctx.arc(0,0,ballR,0,Math.PI*2);ctx.fillStyle=colDim(sec,'0.25');ctx.fill();}
+  ctx.beginPath();ctx.arc(-ballR*0.22,-ballR*0.28,ballR*0.3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fill();
+  ctx.restore();
+  const ts=Math.min(W*0.04,H*0.05);ctx.font=`600 ${ts}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.textAlign='center';ctx.textBaseline='middle';const infoY=groundY+(H-groundY)*0.32;
+  ctx.fillText(smpte(totalF,fps),cx,infoY);
+  ctx.font=`400 ${ts*0.6}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.fillText(`${fps}${scan}  ·  Frame ${totalF}`,cx,infoY+ts*1.1);
+  ctx.font=`600 ${ts*0.55}px IBM Plex Mono, monospace`;ctx.fillStyle=colDim(sec,'0.5');
+  const fl=isEven(sec)?`${FREQ_EVEN_BOUNCE} Hz`:`${FREQ_ODD_BOUNCE} Hz`;
+  ctx.fillText(even?`PAIR  ·  ${fl}`:`IMPAIR  ·  ${fl}`,cx,infoY+ts*2.2);
+  ctx.font=`500 ${ts*0.55}px IBM Plex Mono, monospace`;ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,0.12)';
+  ctx.fillText(`SEC ${String(sec).padStart(4,'0')}`,14,22);ctx.textAlign='right';ctx.fillText(`${fps}${scan}`,W-14,22);
+  const dc=10,dg=14,dw=dc*dg,dx=cx-dw/2,dy=H-18;
+  for(let i=0;i<dc;i++){const active=(sec%dc)===i;ctx.beginPath();ctx.arc(dx+i*dg+4,dy,active?3.5:1.5,0,Math.PI*2);
+  ctx.fillStyle=active?colDim(sec,'0.7'):'rgba(255,255,255,0.06)';ctx.fill();}
+}
+
+// ========== RENDU DELAY TEST ⚡ ==========
+// Pattern dédié au mode Analyseur :
+// - Fond noir 100% du temps hors flash
+// - Flash blanc PLEIN ÉCRAN pendant 2 frames à chaque seconde (max contraste pour détection caméra browser)
+// - Bip 1000 Hz pair / 500 Hz impair, durée 30 ms, parfaitement co-localisé avec le flash
+// - Légère HUD discrète en bas (n'interfère pas avec détection ROI centrale)
+// SYNC AUDIT V8.1
+//   Bip programmé : audioT0 + s   (seconde s exacte, durée 30 ms)
+//   Flash visuel  : actif si (frac*1000) < (2 × (1000/fps))  →  démarre à frac=0 = seconde exacte
+//   Référence visuelle : audioCtx.currentTime
+//   → Bip et flash démarrent à la même horloge audio. Aucun drift possible.
+function renderDelayTest(ctx,W,H,totalF,sec,frac){
+  const fd = 1000/fps; // ms par frame
+  const flashDurMs = 2 * fd; // 2 frames
+  const flashActive = (frac * 1000) < flashDurMs;
+  const even = isEven(sec);
+
+  // Fond plein écran : blanc pur si flash, sinon noir pur
+  ctx.fillStyle = flashActive ? '#ffffff' : '#000000';
+  ctx.fillRect(0, 0, W, H);
+
+  // HUD discret en bas — n'apparaît PAS pendant le flash (sinon brouille la détection)
+  if (!flashActive) {
+    const ts = Math.min(W*0.024, H*0.035);
+    const ts2 = ts * 0.75;
+
+    // Compteur SEC + parité
+    ctx.font = `600 ${ts}px IBM Plex Mono, monospace`;
+    ctx.fillStyle = colDim(sec, '0.55');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const label = even ? `SEC ${String(sec).padStart(2,'0')}  ·  PAIR · ${FREQ_EVEN_COUNTER} Hz`
+                       : `SEC ${String(sec).padStart(2,'0')}  ·  IMPAIR · ${FREQ_ODD_COUNTER} Hz`;
+    ctx.fillText(label, W/2, H - ts*2.2);
+
+    // TC SMPTE
+    ctx.font = `500 ${ts2}px IBM Plex Mono, monospace`;
+    ctx.fillStyle = 'rgba(255,255,255,0.20)';
+    ctx.fillText(`${smpte(totalF,fps)}  ·  ${fps}${scan}`, W/2, H - ts*0.7);
+
+    // Coin haut gauche : label pattern
+    ctx.font = `500 ${ts2}px IBM Plex Mono, monospace`;
+    ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.fillText('DELAY TEST ⚡', 14, 22);
+
+    // Coin haut droit : info
+    ctx.textAlign = 'right';
+    ctx.fillText(`Flash ${flashDurMs.toFixed(0)} ms`, W - 14, 22);
+  }
+}
+
+// ========================================================================
+// ========== ANALYSEUR — Mesure de délai A/V ==========
+// ========================================================================
+
+// État
+let analyzerState = 'idle'; // idle | setup | running | finished | error
+let videoStream = null, audioStream = null;
+let videoEl = null, captureCanvas = null, captureCtx = null;
+let analyserNode = null, micSourceNode = null, micGainNode = null, audioRawBuf = null;
+let analyzerFps = 25;
+let analyzerPassesTarget = 5;
+let analyzerRafId = null;
+
+// Détection
+let lumBaseline = 30;      // moyenne glissante luminance (0-255)
+let rmsBaseline = 0.005;   // moyenne glissante RMS audio
+let lastFlashAt = -Infinity;
+let lastBipAt = -Infinity;
+// V8.1.2 — Interpolation sub-frame
+let prevLum = 0, prevLumT = 0;
+let prevRms = 0, prevRmsT = 0;
+// V8.1 — Fenêtres élargies pour marge de sécurité (delays > 500 ms gérés)
+const COOLDOWN_MS = 700;           // entre 2 détections du même type
+const MATCH_WINDOW_MS = 900;       // fenêtre d'appariement flash↔bip (couvre ±900 ms)
+const FLASH_MATCH_DELAY_MS = 1000; // on attend ce délai pour matcher (collecte bips environnants)
+const STATE_WARMUP_MS = 800;       // ignore détections au tout début (init expo auto caméra)
+// V8.1.1 — Boost sensibilité micro
+const MIC_GAIN = 4.0;              // gain GainNode (≈ +12 dB)
+const RMS_THRESHOLD_ABS = 0.02;    // seuil RMS absolu (était 0.04)
+const RMS_THRESHOLD_FACTOR = 3.5;  // multiplicateur baseline (était 5)
+const LUM_THRESHOLD_ABS = 110;     // seuil luminance absolu (était 120)
+const LUM_THRESHOLD_DELTA = 40;    // delta vs baseline (était 50)
+// Détection fréquence bip (sanity check pair/impair)
+let audioFreqBuf = null;           // Uint8Array pour getByteFrequencyData
+
+let pendingFlashes = [];   // [{t, matched}]
+let bipBuffer = [];        // [{t, parity}]  parity: 'even' | 'odd' | 'unknown'
+let measurements = [];     // [{deltaMs, bipParity}]
+let analyzerStartedAt = 0;
+
+// VU display
+let vuVideoSmooth = 0, vuAudioSmooth = 0;
+
+// V8.1.1 — Mode debug
+let debugMode = false;
+let debugStats = { lum: 0, lumThr: 0, rms: 0, rmsThr: 0, flashes: 0, bips: 0, lastDelta: null };
+
+function toggleDebug(){
+  debugMode = !debugMode;
+  document.getElementById('az-debug-toggle').classList.toggle('active', debugMode);
+}
+
+// ===== SETUP UI =====
+function buildAnalyzerSetupUI(){
+  const grid = document.getElementById('az-fps-grid');
+  grid.innerHTML = '';
+  ANALYZER_FPS.forEach(f => {
+    const btn = document.createElement('div');
+    btn.className = 'az-fps-btn' + (f===analyzerFps ? ' active' : '');
+    btn.textContent = f;
+    btn.onclick = () => {
+      analyzerFps = f;
+      buildAnalyzerSetupUI();
+    };
+    grid.appendChild(btn);
+  });
+  document.getElementById('az-passes-val').textContent = analyzerPassesTarget;
+  document.getElementById('az-passes-minus').disabled = analyzerPassesTarget <= 5;
+  document.getElementById('az-passes-plus').disabled = analyzerPassesTarget >= 20;
+  document.getElementById('az-eta').textContent = analyzerPassesTarget;
+}
+function adjustPasses(d){
+  // V8.1.2 — plage étendue à 5-20 (au lieu de 5-10) pour meilleur moyennage statistique
+  analyzerPassesTarget = Math.max(5, Math.min(20, analyzerPassesTarget + d));
+  buildAnalyzerSetupUI();
+}
+
+// ===== RUN =====
+async function startAnalyzerRun(){
+  showScreen('analyzer-run');
+  analyzerState = 'setup';
+
+  // Reset state
+  pendingFlashes = []; bipBuffer = []; measurements = [];
+  lumBaseline = 30; rmsBaseline = 0.005;
+  lastFlashAt = -Infinity; lastBipAt = -Infinity;
+  prevLum = 0; prevLumT = 0; prevRms = 0; prevRmsT = 0;
+  vuVideoSmooth = 0; vuAudioSmooth = 0;
+  debugStats = { lum: 0, lumThr: 0, rms: 0, rmsThr: 0, flashes: 0, bips: 0, lastDelta: null };
+  document.getElementById('az-debug-panel').classList.toggle('visible', debugMode);
+
+  document.getElementById('az-run-info').textContent =
+    `Mesure · ${analyzerFps} fps · ${analyzerPassesTarget} passes`;
+  document.getElementById('az-pass-num').textContent = 0;
+  document.getElementById('az-pass-target').textContent = analyzerPassesTarget;
+  document.getElementById('az-progress-fill').style.width = '0%';
+  document.getElementById('az-status').textContent = 'Demande des permissions…';
+
+  // 1. Permissions caméra + micro
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 60, min: 30 }   // V8.1.2 — best effort 60 fps
+      },
+      audio: false
+    });
+    audioStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        autoGainControl: false,
+        noiseSuppression: false
+      },
+      video: false
+    });
+  } catch (e) {
+    return showAnalyzerError(
+      'Accès caméra/micro refusé.<br><br>' +
+      'Va dans <strong>Réglages → Safari → Caméra / Microphone</strong> et autorise pour ce site, puis recharge la page.<br><br>' +
+      'Détail : ' + (e.message || e.name || 'permission denied')
+    );
+  }
+
+  // 2. Setup preview vidéo
+  videoEl = document.getElementById('analyzer-video');
+  videoEl.srcObject = videoStream;
+  videoEl.muted = true;
+  videoEl.playsInline = true;
+  try { await videoEl.play(); } catch(e) {}
+
+  // 3. Setup canvas downscale pour détection
+  if (!captureCanvas) {
+    captureCanvas = document.createElement('canvas');
+    captureCanvas.width = 160; captureCanvas.height = 90;
+    captureCtx = captureCanvas.getContext('2d', { willReadFrequently: true });
+  }
+
+  // 4. Setup audio analyser
+  ensureAudio();
+  // En mode Analyseur on désactive le silent MP3 (Device 2 ne joue rien)
+  deactivateMediaSession();
+
+  try {
+    micSourceNode = audioCtx.createMediaStreamSource(audioStream);
+    // V8.1.1 — GainNode pour booster le signal micro (compense la perte à distance ~20cm écran)
+    // Gain ×4 ≈ +12 dB. À ajuster selon retours terrain (voir constante GAIN_MIC).
+    micGainNode = audioCtx.createGain();
+    micGainNode.gain.value = MIC_GAIN;
+    analyserNode = audioCtx.createAnalyser();
+    analyserNode.fftSize = 1024;
+    analyserNode.smoothingTimeConstant = 0;
+    micSourceNode.connect(micGainNode);
+    micGainNode.connect(analyserNode);
+    // PAS de connexion à destination → pas de feedback audio
+    audioRawBuf = new Float32Array(analyserNode.fftSize);
+    audioFreqBuf = new Uint8Array(analyserNode.frequencyBinCount); // V8.1 — FFT
+  } catch(e) {
+    return showAnalyzerError('Erreur initialisation audio : ' + e.message);
+  }
+
+  // 5. Démarrer la boucle
+  analyzerStartedAt = performance.now();
+  analyzerState = 'running';
+  document.getElementById('az-status').textContent = 'Calibrage (1 s)…';
+  analyzerLoop();
+}
+
+function analyzerLoop(){
+  if (analyzerState !== 'running') return;
+  const now = performance.now();
+  const elapsedSinceStart = now - analyzerStartedAt;
+
+  // VIDÉO — luminance ROI centrale
+  let lum = 0;
+  if (videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+    try {
+      captureCtx.drawImage(videoEl, 0, 0, captureCanvas.width, captureCanvas.height);
+      lum = computeLuminance(captureCtx, captureCanvas.width, captureCanvas.height);
+      if (elapsedSinceStart > STATE_WARMUP_MS) {
+        detectFlash(now, lum);
+      } else {
+        // pendant warmup : on initialise la baseline
+        lumBaseline = lumBaseline * 0.9 + lum * 0.1;
+      }
+    } catch(e) {}
+  }
+
+  // AUDIO — RMS
+  let rms = 0;
+  if (analyserNode) {
+    analyserNode.getFloatTimeDomainData(audioRawBuf);
+    let sumSq = 0;
+    for (let i = 0; i < audioRawBuf.length; i++) sumSq += audioRawBuf[i] * audioRawBuf[i];
+    rms = Math.sqrt(sumSq / audioRawBuf.length);
+    if (elapsedSinceStart > STATE_WARMUP_MS) {
+      detectBip(now, rms);
+    } else {
+      rmsBaseline = rmsBaseline * 0.9 + rms * 0.1;
+    }
+  }
+
+  // VU display (lissé pour affichage)
+  vuVideoSmooth = vuVideoSmooth * 0.85 + (lum/255) * 0.15;
+  vuAudioSmooth = vuAudioSmooth * 0.85 + Math.min(1, rms*5) * 0.15;
+  updateVU(vuVideoSmooth, vuAudioSmooth);
+
+  // V8.1.1 — Debug overlay
+  if (debugMode) {
+    debugStats.lum = lum;
+    debugStats.lumThr = Math.max(LUM_THRESHOLD_ABS, lumBaseline + LUM_THRESHOLD_DELTA);
+    debugStats.rms = rms;
+    debugStats.rmsThr = Math.max(RMS_THRESHOLD_ABS, rmsBaseline * RMS_THRESHOLD_FACTOR);
+    updateDebugDisplay();
+  }
+
+  // Update status
+  if (elapsedSinceStart < STATE_WARMUP_MS) {
+    document.getElementById('az-status').textContent = 'Calibrage…';
+  } else if (measurements.length === 0) {
+    document.getElementById('az-status').textContent = 'En attente du signal…';
+  } else {
+    document.getElementById('az-status').textContent = `Mesure ${measurements.length}/${analyzerPassesTarget} OK`;
+  }
+
+  // Appariement flash ↔ bip
+  tryMatchAndRecord(now);
+
+  analyzerRafId = requestAnimationFrame(analyzerLoop);
+}
+
+function computeLuminance(ctx, w, h){
+  // Calcul luminance Rec.709 sur toute l'image downscalée (160x90 = 14 400 pixels)
+  const img = ctx.getImageData(0, 0, w, h);
+  const data = img.data;
+  let sum = 0;
+  const n = data.length / 4;
+  for (let i = 0; i < data.length; i += 4) {
+    sum += 0.2126 * data[i] + 0.7152 * data[i+1] + 0.0722 * data[i+2];
+  }
+  return sum / n; // 0-255
+}
+
+function detectFlash(t, lum){
+  if (t - lastFlashAt < COOLDOWN_MS) {
+    lumBaseline = lumBaseline * 0.97 + lum * 0.03;
+    prevLum = lum; prevLumT = t;
+    return;
+  }
+  // V8.1.1 — Seuils luminance plus permissifs (110 absolu, +40 baseline)
+  const threshold = Math.max(LUM_THRESHOLD_ABS, lumBaseline + LUM_THRESHOLD_DELTA);
+  // V8.1.2 — Détection du franchissement de seuil ET interpolation sub-frame
+  if (lum > threshold && prevLum <= threshold && prevLumT > 0) {
+    // Interp linéaire : à quel instant exact la luminance a-t-elle atteint le seuil ?
+    //   threshold = prevLum + frac * (lum - prevLum)
+    //   → frac = (threshold - prevLum) / (lum - prevLum)
+    const frac = (threshold - prevLum) / (lum - prevLum);
+    const tInterp = prevLumT + frac * (t - prevLumT);
+    lastFlashAt = t;
+    pendingFlashes.push({ t: tInterp, matched: false });
+    pendingFlashes = pendingFlashes.slice(-30);
+    pulseVUFlash('video');
+    if (debugMode) debugStats.flashes++;
+    prevLum = lum; prevLumT = t;
+    return;
+  }
+  lumBaseline = lumBaseline * 0.97 + lum * 0.03;
+  prevLum = lum; prevLumT = t;
+}
+
+function detectBip(t, rms){
+  if (t - lastBipAt < COOLDOWN_MS) {
+    rmsBaseline = rmsBaseline * 0.95 + rms * 0.05;
+    prevRms = rms; prevRmsT = t;
+    return;
+  }
+  // V8.1.1 — Seuils RMS plus permissifs (0.02 absolu, baseline ×3.5)
+  const threshold = Math.max(RMS_THRESHOLD_ABS, rmsBaseline * RMS_THRESHOLD_FACTOR);
+  // V8.1.2 — Détection du franchissement de seuil ET interpolation sub-frame
+  if (rms > threshold && prevRms <= threshold && prevRmsT > 0) {
+    const frac = (threshold - prevRms) / (rms - prevRms);
+    const tInterp = prevRmsT + frac * (t - prevRmsT);
+    lastBipAt = t;
+    const parity = identifyBipParity();
+    bipBuffer.push({ t: tInterp, parity });
+    bipBuffer = bipBuffer.filter(b => t - b.t < 3000);
+    pulseVUFlash('audio');
+    if (debugMode) debugStats.bips++;
+    prevRms = rms; prevRmsT = t;
+    return;
+  }
+  rmsBaseline = rmsBaseline * 0.95 + rms * 0.05;
+  prevRms = rms; prevRmsT = t;
+}
+
+// V8.1 — Identifie si le bip détecté est plutôt 1000 Hz (pair) ou 500 Hz (impair)
+// fftSize=1024, sampleRate typique 48000Hz → binWidth = ~46.9 Hz
+//   500 Hz → bin ~10-11   (window 400-650 Hz : bins 8-14)
+//   1000 Hz → bin ~21-22  (window 850-1150 Hz : bins 18-25)
+function identifyBipParity(){
+  if (!analyserNode || !audioFreqBuf) return 'unknown';
+  analyserNode.getByteFrequencyData(audioFreqBuf);
+  const sr = audioCtx.sampleRate || 48000;
+  const binHz = sr / analyserNode.fftSize;
+  const binAt = hz => Math.round(hz / binHz);
+  let sumOdd = 0, sumEven = 0;
+  for (let i = binAt(400); i <= binAt(650); i++) sumOdd += audioFreqBuf[i] || 0;
+  for (let i = binAt(850); i <= binAt(1150); i++) sumEven += audioFreqBuf[i] || 0;
+  if (sumEven < 50 && sumOdd < 50) return 'unknown'; // signal trop faible pour conclure
+  return sumEven > sumOdd ? 'even' : 'odd';
+}
+
+function tryMatchAndRecord(now){
+  for (let f of pendingFlashes) {
+    if (f.matched) continue;
+    if (now - f.t < FLASH_MATCH_DELAY_MS) continue; // pas assez de patience pour avoir vu le bip
+    f.matched = true;
+
+    let bestBip = null;
+    let bestDelta = null;
+    for (let bip of bipBuffer) {
+      const delta = bip.t - f.t; // + = bip après flash = son en retard
+      if (Math.abs(delta) > MATCH_WINDOW_MS) continue;
+      if (bestDelta === null || Math.abs(delta) < Math.abs(bestDelta)) {
+        bestDelta = delta;
+        bestBip = bip;
+      }
+    }
+
+    if (bestDelta !== null) {
+      measurements.push({ deltaMs: bestDelta, bipParity: bestBip.parity });
+      debugStats.lastDelta = bestDelta;
+      document.getElementById('az-pass-num').textContent = measurements.length;
+      const pct = Math.min(100, 100 * measurements.length / analyzerPassesTarget);
+      document.getElementById('az-progress-fill').style.width = pct + '%';
+
+      if (measurements.length >= analyzerPassesTarget) {
+        finishAnalyzer();
+        return;
+      }
+    }
+  }
+  pendingFlashes = pendingFlashes.filter(f => now - f.t < 3000);
+}
+
+// VU helpers
+function updateVU(videoNorm, audioNorm){
+  document.getElementById('az-vu-video').style.width = (videoNorm*100).toFixed(1) + '%';
+  document.getElementById('az-vu-audio').style.width = (audioNorm*100).toFixed(1) + '%';
+}
+
+// V8.1.1 — Debug display
+function updateDebugDisplay(){
+  const lumEl = document.getElementById('dbg-lum');
+  const lumThrEl = document.getElementById('dbg-lum-thr');
+  const rmsEl = document.getElementById('dbg-rms');
+  const rmsThrEl = document.getElementById('dbg-rms-thr');
+  lumEl.textContent = debugStats.lum.toFixed(0);
+  lumEl.className = 'v ' + (debugStats.lum > debugStats.lumThr ? 'ok' : '');
+  lumThrEl.textContent = debugStats.lumThr.toFixed(0);
+  rmsEl.textContent = debugStats.rms.toFixed(3);
+  rmsEl.className = 'v ' + (debugStats.rms > debugStats.rmsThr ? 'ok' : '');
+  rmsThrEl.textContent = debugStats.rmsThr.toFixed(3);
+  document.getElementById('dbg-flashes').textContent = debugStats.flashes;
+  document.getElementById('dbg-bips').textContent = debugStats.bips;
+  document.getElementById('dbg-last-delta').textContent =
+    debugStats.lastDelta == null ? '—' :
+    (debugStats.lastDelta >= 0 ? '+' : '') + debugStats.lastDelta.toFixed(0) + ' ms';
+}
+let vuFlashTimers = { video: null, audio: null };
+function pulseVUFlash(kind){
+  const el = document.getElementById(kind === 'video' ? 'az-vu-flash' : 'az-vu-bip');
+  if (!el) return;
+  el.classList.add('active');
+  clearTimeout(vuFlashTimers[kind]);
+  vuFlashTimers[kind] = setTimeout(() => el.classList.remove('active'), 200);
+}
+
+function abortAnalyzer(silent){
+  if (analyzerState === 'idle') return;
+  analyzerState = 'idle';
+  if (analyzerRafId) cancelAnimationFrame(analyzerRafId);
+  stopAnalyzerStreams();
+  if (!silent) showScreen('home-mode');
+}
+
+function stopAnalyzerStreams(){
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  if (audioStream) { audioStream.getTracks().forEach(t => t.stop()); audioStream = null; }
+  if (analyserNode) { try { analyserNode.disconnect(); } catch(e){} analyserNode = null; }
+  if (micGainNode) { try { micGainNode.disconnect(); } catch(e){} micGainNode = null; }
+  if (micSourceNode) { try { micSourceNode.disconnect(); } catch(e){} micSourceNode = null; }
+  if (videoEl) { try { videoEl.srcObject = null; } catch(e){} }
+}
+
+function finishAnalyzer(){
+  analyzerState = 'finished';
+  if (analyzerRafId) cancelAnimationFrame(analyzerRafId);
+  stopAnalyzerStreams();
+
+  const allDeltas = measurements.map(m => m.deltaMs);
+  const stats = computeRobustStats(allDeltas);
+
+  // V8.1 — Sanity check parité (alternance pair/impair attendue)
+  const parities = measurements.map(m => m.bipParity);
+  const known = parities.filter(p => p !== 'unknown');
+  let parityHealth = 'unknown';
+  if (known.length >= 2) {
+    const evens = known.filter(p => p === 'even').length;
+    const odds = known.filter(p => p === 'odd').length;
+    if (evens > 0 && odds > 0) parityHealth = 'ok';
+    else parityHealth = 'partial';
+  }
+
+  showAnalyzerResult(stats, parityHealth);
+}
+
+// V8.1.2 — Stats robustes : médiane (insensible aux outliers) + MAD + filtrage
+function computeRobustStats(arr){
+  const n = arr.length;
+  const sorted = [...arr].sort((a,b) => a - b);
+  const median = n % 2 === 0
+    ? (sorted[n/2 - 1] + sorted[n/2]) / 2
+    : sorted[(n-1)/2];
+
+  // MAD (Median Absolute Deviation) — équivalent robuste de l'écart-type
+  const absDevs = sorted.map(v => Math.abs(v - median)).sort((a,b) => a - b);
+  const mad = n % 2 === 0
+    ? (absDevs[n/2 - 1] + absDevs[n/2]) / 2
+    : absDevs[(n-1)/2];
+  // MAD × 1.4826 ≈ écart-type pour distribution normale
+  const robustStdDev = mad * 1.4826;
+
+  // Filtrage outliers : > 2 × MAD (~95% IC pour distribution normale)
+  const outlierThreshold = Math.max(20, mad * 2); // au moins 20 ms de tolérance
+  const inliers = arr.filter(v => Math.abs(v - median) <= outlierThreshold);
+  const nOutliers = n - inliers.length;
+
+  // Stats sur les inliers seulement
+  const meanFiltered = inliers.reduce((a,b) => a+b, 0) / inliers.length;
+  const min = sorted[0];
+  const max = sorted[n - 1];
+
+  return {
+    n,
+    median,
+    meanFiltered,
+    robustStdDev,
+    min,
+    max,
+    nOutliers,
+    allDeltas: arr
+  };
+}
+
+function showAnalyzerResult(stats, parityHealth){
+  showScreen('analyzer-result');
+
+  // V8.1.2 — On affiche la MÉDIANE comme valeur principale (robuste aux outliers)
+  const mainMs = stats.median;
+  const absMs = Math.abs(mainMs);
+  const frames = mainMs / (1000 / analyzerFps);
+
+  // Mention
+  let mention, color;
+  if (absMs < 5) { mention = 'EN SYNC'; color = 'var(--green)'; }
+  else if (mainMs > 0) { mention = 'SON EN RETARD'; }
+  else { mention = 'SON EN AVANCE'; }
+
+  // Couleur EBU R37 @ 25 fps : ±40 ms vert, 40-80 orange, >80 rouge
+  if (absMs < 40) color = 'var(--green)';
+  else if (absMs < 80) color = 'var(--orange)';
+  else color = 'var(--red)';
+
+  // Texte
+  const sign = mainMs >= 0 ? '+' : '−';
+  document.getElementById('result-mention').textContent = mention;
+  document.getElementById('result-mention').style.color = color;
+
+  document.getElementById('result-ms').textContent = `${sign}${absMs.toFixed(0)} ms`;
+  document.getElementById('result-ms').style.color = color;
+
+  const fSign = frames >= 0 ? '+' : '−';
+  document.getElementById('result-frames').textContent =
+    `${fSign}${Math.abs(frames).toFixed(1)} images @ ${analyzerFps} fps`;
+
+  // V8.1.2 — Détail enrichi
+  let parityInfo = '';
+  if (parityHealth === 'ok') parityInfo = ' · Signal OK';
+  else if (parityHealth === 'partial') parityInfo = ' · ⚠ Vérifier signal';
+  else parityInfo = ' · Parité non identifiée';
+
+  const minSign = stats.min >= 0 ? '+' : '−';
+  const maxSign = stats.max >= 0 ? '+' : '−';
+  const outliersStr = stats.nOutliers > 0 ? ` · ${stats.nOutliers} outlier(s) exclu(s)` : '';
+
+  document.getElementById('result-stddev').innerHTML =
+    `Médiane sur ${stats.n} passes · σ ±${stats.robustStdDev.toFixed(1)} ms${outliersStr}<br>` +
+    `Min ${minSign}${Math.abs(stats.min).toFixed(0)} ms · Max ${maxSign}${Math.abs(stats.max).toFixed(0)} ms${parityInfo}`;
+
+  // Pour la barre échelle on utilise la médiane
+  const meanMs = mainMs;
+
+  // Barre échelle : -120 à +120 ms, marqueur sur valeur moyenne
+  // Zones : -120..-80 rouge | -80..-40 orange | -40..+40 vert | +40..+80 orange | +80..+120 rouge
+  const range = 120;
+  const pct = v => 50 + (v / range) * 50;
+  document.getElementById('bar-red-l').style.left = '0%';
+  document.getElementById('bar-red-l').style.width = pct(-80) + '%';
+  document.getElementById('bar-orange-l').style.left = pct(-80) + '%';
+  document.getElementById('bar-orange-l').style.width = (pct(-40) - pct(-80)) + '%';
+  document.getElementById('bar-green').style.left = pct(-40) + '%';
+  document.getElementById('bar-green').style.width = (pct(40) - pct(-40)) + '%';
+  document.getElementById('bar-orange-r').style.left = pct(40) + '%';
+  document.getElementById('bar-orange-r').style.width = (pct(80) - pct(40)) + '%';
+  document.getElementById('bar-red-r').style.left = pct(80) + '%';
+  document.getElementById('bar-red-r').style.width = (100 - pct(80)) + '%';
+
+  const clamped = Math.max(-range, Math.min(range, meanMs));
+  document.getElementById('bar-marker').style.left = pct(clamped) + '%';
+}
+
+function restartAnalyzer(){
+  analyzerState = 'idle';
+  buildAnalyzerSetupUI();
+  showScreen('analyzer-setup');
+}
+
+function showAnalyzerError(htmlMsg){
+  analyzerState = 'error';
+  stopAnalyzerStreams();
+  // On affiche dans l'écran setup
+  showScreen('analyzer-setup');
+  // Insère un message d'erreur en haut de l'écran setup
+  let existing = document.getElementById('az-error-msg');
+  if (existing) existing.remove();
+  const errDiv = document.createElement('div');
+  errDiv.id = 'az-error-msg';
+  errDiv.className = 'az-error';
+  errDiv.innerHTML = htmlMsg;
+  const setup = document.getElementById('analyzer-setup');
+  setup.insertBefore(errDiv, setup.children[1]);
+  setTimeout(() => {
+    if (errDiv.parentNode) errDiv.remove();
+  }, 12000);
+}
+
+// ========== EMPÊCHE SCROLL SUR ÉCRANS PLEINS ==========
+document.addEventListener('touchmove',function(e){
+  const p=document.getElementById('player'),c=document.getElementById('countdown'),a=document.getElementById('analyzer-run');
+  if(p.classList.contains('active')||c.classList.contains('active')||a.classList.contains('active'))e.preventDefault();
+},{passive:false});
+
+// ========== INIT ==========
+document.addEventListener('DOMContentLoaded',()=>{
+  drawThumbs();
+  buildAnalyzerSetupUI();
+});
+</script>
+</body>
+</html>
