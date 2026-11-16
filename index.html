@@ -2,14 +2,17 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Sync Test Pro v8</title>
+<title>Sync Test Pro v9</title>
+<link rel="icon" href="data:,">
+<!-- Police chargée sans bloquer l'affichage : sans réseau, la police monospace du système prend le relais. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
-
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -439,6 +442,228 @@ html, body {
   .fps-btn:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
   .mode-card:hover { border-color: rgba(255,255,255,0.15); }
 }
+
+/* ===================================================================== */
+/* ===== V9 — ajouts et surcharges ===== */
+/* ===================================================================== */
+:root { --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Courier New', monospace; }
+[hidden] { display: none !important; }
+button { font-family: var(--mono); }
+
+/* Centrage vertical qui reste défilable quand le contenu dépasse l'écran */
+#home-mode, #analyzer-result {
+  justify-content: flex-start; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+#home-mode > :first-child, #analyzer-result > :first-child { margin-top: auto; }
+#home-mode > :last-child, #analyzer-result > :last-child { margin-bottom: auto; }
+#analyzer-result { gap: 14px; }
+/* dans un écran défilable, rien ne doit s'écraser pour tenir dans la hauteur */
+#home-mode > *, #analyzer-setup > *, #analyzer-result > *, #analyzer-history > * { flex-shrink: 0; }
+
+.app-version { font-size: 10px; color: var(--text2); letter-spacing: 2px; }
+
+/* Générateur : le signal de mesure en tête (carte large), les trois autres dessous */
+.patterns-grid.v9 { grid-template-columns: repeat(3, 1fr); max-width: 660px; gap: 10px; }
+.patterns-grid.v9 .featured { grid-column: 1 / -1; display: flex; align-items: stretch; border-color: rgba(59,130,246,0.5); }
+.patterns-grid.v9 .featured .pattern-thumb { width: 44%; flex-shrink: 0; }
+.patterns-grid.v9 .featured .pattern-info { display: flex; flex-direction: column; justify-content: center; }
+.pattern-tag {
+  align-self: flex-start; margin-bottom: 6px; padding: 2px 8px; border-radius: 10px; font-size: 9px;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--even); border: 1px solid rgba(59,130,246,0.35);
+}
+@media (max-width: 520px) {
+  .patterns-grid.v9 { max-width: 100%; }
+  .patterns-grid.v9 .pattern-card:not(.featured) .pattern-info { padding: 8px 8px 10px; }
+  .patterns-grid.v9 .pattern-card:not(.featured) .pattern-info h3 { font-size: 11px; margin: 0; }
+  .patterns-grid.v9 .pattern-card:not(.featured) .pattern-info p { display: none; }
+}
+@media (orientation: landscape) {
+  .patterns-grid.v9 { grid-template-columns: repeat(4, 1fr); max-width: 94%; }
+  .patterns-grid.v9 .featured { grid-column: auto; display: block; }
+  .patterns-grid.v9 .featured .pattern-thumb { width: 100%; }
+  .patterns-grid.v9 .pattern-tag { display: none; }
+}
+
+/* Compte à rebours */
+.cd-cancel { margin-top: 28px; }
+
+/* Lecteur : marges de sécurité (encoche) */
+.player-hud {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
+/* Analyseur — accueil */
+.az-info-card ol { margin: 6px 0 0 18px; padding: 0; }
+.az-info-card li { margin: 4px 0; }
+.az-info-card b { color: var(--text); font-weight: 600; }
+.az-calib {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; font-size: 11px; line-height: 1.6; color: var(--text2);
+}
+.az-calib.ok { border-color: rgba(34,197,94,0.35); }
+.az-calib.none { border-color: rgba(249,115,22,0.35); }
+.az-calib .t { display: block; color: var(--text); font-weight: 600; margin-bottom: 2px; }
+.az-calib.ok .t { color: var(--green); }
+.az-calib.none .t { color: var(--orange); }
+.az-link {
+  background: none; border: none; color: var(--text2); font-size: 11px; text-decoration: underline;
+  padding: 6px 0 0; cursor: pointer;
+}
+.az-second-btn {
+  background: none; border: 1px solid rgba(255,255,255,0.25); color: var(--text); border-radius: 8px;
+  padding: 13px 20px; font-size: 12px; font-weight: 600; width: 100%; max-width: 380px; cursor: pointer;
+}
+.az-second-btn:active { background: rgba(255,255,255,0.06); transform: scale(0.98); }
+.az-details > summary {
+  font-size: 10px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase;
+  padding: 8px 4px; cursor: pointer; list-style: none;
+}
+.az-details > summary::-webkit-details-marker { display: none; }
+.az-details > summary::before { content: '▸ '; }
+.az-details[open] > summary::before { content: '▾ '; }
+.az-details .inner { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.az-row { display: flex; gap: 10px; width: 100%; max-width: 380px; }
+.az-row > * { flex: 1; }
+.az-error { width: 100%; }
+
+/* Analyseur — mesure en cours */
+.az-top-btns { display: flex; gap: 8px; }
+.az-source-panel {
+  display: none; background: rgba(0,0,0,0.88); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px; padding: 10px 12px; margin-top: 8px;
+}
+.az-source-panel.visible { display: block; }
+.az-source-panel label {
+  display: block; font-size: 9px; letter-spacing: 1.5px; color: rgba(255,255,255,0.5);
+  text-transform: uppercase; margin: 6px 0 4px;
+}
+.az-source-panel select {
+  width: 100%; background: #111; color: #fff; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px; padding: 9px 8px; font-family: var(--mono); font-size: 12px;
+}
+.az-progress { gap: 14px; }
+.az-phase {
+  font-size: 17px; font-weight: 600; color: #fff; text-align: center;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95);
+}
+.az-checks {
+  display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.6);
+  border-radius: 8px; padding: 12px 16px; min-width: 240px;
+}
+.az-check { display: flex; align-items: center; gap: 10px; font-size: 12px; color: rgba(255,255,255,0.55); }
+.az-check .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+.az-check .st { margin-left: auto; font-size: 10px; color: rgba(255,255,255,0.45); }
+.az-check.ok { color: #fff; }
+.az-check.ok .dot { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.7); }
+.az-check.ok .st { color: var(--green); }
+.az-progress-label {
+  max-width: 330px; text-align: center; line-height: 1.5; margin-top: 0;
+  background: rgba(0,0,0,0.55); padding: 7px 12px; border-radius: 6px; color: rgba(255,255,255,0.85);
+}
+
+/* Analyseur — résultat */
+.az-result-tag {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text2);
+  padding: 4px 12px; border: 1px solid var(--border); border-radius: 12px;
+}
+.az-result-tag.raw { color: var(--orange); border-color: rgba(249,115,22,0.35); }
+.az-result-tag.cal { color: var(--green); border-color: rgba(34,197,94,0.35); }
+.az-action-card {
+  width: 100%; max-width: 380px; background: var(--bg2); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px; padding: 14px 16px; font-size: 13px; line-height: 1.6; color: var(--text); text-align: center;
+}
+.az-action-card .who {
+  display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text2); margin-bottom: 4px;
+}
+.az-action-card b { color: #fff; font-size: 15px; font-weight: 700; }
+.az-action-card small { display: block; color: var(--text2); font-size: 11px; margin-top: 6px; }
+.az-warn {
+  width: 100%; max-width: 380px; background: rgba(249,115,22,0.07); border: 1px solid rgba(249,115,22,0.3);
+  border-radius: 8px; padding: 10px 14px; font-size: 11px; line-height: 1.6; color: #fdba74; text-align: left;
+}
+.az-warn p + p { margin-top: 6px; }
+.az-result-frames { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.az-fps-select {
+  background: var(--bg2); color: var(--text); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px;
+  font-family: var(--mono); font-size: 14px; padding: 4px 6px;
+}
+.az-result-stddev { max-width: 380px; }
+#analyzer-result .az-start-btn { margin-top: 4px; }
+
+/* Historique */
+.hist-item .tag { color: var(--text2); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+.hist-item.calib { border-style: dashed; }
+#hist-content { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+/* ===== V9 — lisibilité, cibles tactiles, écrans revus (relecture d'ergonomie) ===== */
+:root { --text2: #9a9aa5; }
+.back-btn, .az-exit-btn, .exit-btn, .az-fps-select { min-height: 44px; }
+.az-link { min-height: 44px; padding: 0; display: inline-flex; align-items: center; font-size: 12px; }
+.az-details > summary { min-height: 44px; display: flex; align-items: center; font-size: 11px; }
+.az-passes-btn { width: 44px; height: 44px; }
+.offset-btn { width: 44px; height: 44px; }
+.az-top-btns { gap: 16px; }
+.az-info-card, .az-calib, .az-result-stddev, .az-action-card small { font-size: 12px; }
+.az-progress-label { font-size: 14px; }
+.az-start-btn, .az-second-btn { min-height: 46px; }
+.az-start-btn[disabled], .az-second-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+#gen-warn { flex-shrink: 0; }
+#countdown-hint { margin-top: 18px; padding: 0 24px; }
+.menu-note { font-size: 11px; color: var(--text2); text-align: center; max-width: 380px; line-height: 1.6; }
+.pattern-sub {
+  grid-column: 1 / -1; font-size: 10px; color: var(--text2); letter-spacing: 1.5px;
+  text-transform: uppercase; text-align: center; padding-top: 6px;
+}
+@media (orientation: landscape) { .pattern-sub { display: none; } }
+#analyzer-calib {
+  align-items: center; justify-content: flex-start; padding: 24px; gap: 18px;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+#analyzer-calib > * { flex-shrink: 0; }
+#analyzer-calib > :first-child { margin-top: auto; }
+#analyzer-calib > :last-child { margin-bottom: auto; }
+.az-src-names {
+  font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 3px; max-width: 46vw;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#az-count { text-align: center; }
+.az-count-unit {
+  font-size: 12px; color: rgba(255,255,255,0.75); letter-spacing: 2px; text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.9); margin-top: 6px;
+}
+.az-action-card b { display: block; font-size: 20px; line-height: 1.3; }
+.az-action-card.weak { border-color: rgba(249,115,22,0.45); }
+.az-result-ms.weak { color: var(--text2) !important; }
+.az-quality { font-size: 13px; font-weight: 600; text-align: center; }
+.az-quality.q-bonne { color: var(--green); }
+.az-quality.q-moyenne { color: var(--orange); }
+.az-quality.q-faible { color: var(--red); }
+.az-legend { font-size: 10px; color: var(--text2); text-align: center; }
+.az-result-more { width: 100%; max-width: 380px; text-align: center; }
+.az-result-more > summary { justify-content: center; }
+.az-result-more .body { font-size: 12px; color: var(--text2); line-height: 1.6; padding-bottom: 6px; }
+.hist-item { cursor: pointer; min-height: 48px; }
+.hist-item:active { background: rgba(255,255,255,0.05); }
+
+/* ===== V9 — relecture d'ergonomie, ronde 2 ===== */
+.az-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 380px; align-items: center; }
+.az-exit-btn, .exit-btn { white-space: nowrap; }
+.az-source-panel select { min-height: 44px; }
+.az-src-names { white-space: normal; max-width: 52vw; line-height: 1.5; }
+.az-src-names div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mode-card p { font-size: 12px; }
+.hist-item { font-size: 12px; }
+.hist-item .meta, .hist-item .tag { font-size: 11px; }
+.az-check .st { font-size: 12px; }
+.az-legend { font-size: 11px; }
+.az-warn { font-size: 12px; }
+.az-warn b { color: #fff; }
+.az-error .az-link { color: var(--red); }
 </style>
 </head>
 <body>
@@ -451,30 +676,37 @@ html, body {
 <div id="home-mode" class="screen active">
   <div class="home-mode-header">
     <h1>Sync Test Pro</h1>
-    <p>A/V Toolkit · v8</p>
+    <p>Synchro son / image</p>
   </div>
   <div class="mode-cards">
     <div class="mode-card" onclick="enterGenerator()">
-      <span class="badge dev1">Device 1 · Générateur</span>
-      <h2>Générateur de signal</h2>
-      <p>Affiche un pattern de test (compteur, mire, balle, NTP, delay test) avec bips synchronisés. À filmer pour valider la chaîne de diffusion.</p>
+      <span class="badge dev1">Appareil 1 · Générateur</span>
+      <h2>Émettre le signal</h2>
+      <p>Affiche un flash et joue un bip au même instant. À placer devant la caméra et le micro de la chaîne à contrôler.</p>
     </div>
     <div class="mode-card" onclick="enterAnalyzer()">
-      <span class="badge dev2">Device 2 · Analyseur</span>
-      <h2>Mesure de délai A/V</h2>
-      <p>Filme l'écran du Device 1 et capte son audio via micro. Mesure automatiquement le décalage son/image en ms et en images.</p>
+      <span class="badge dev2">Appareil 2 · Analyseur</span>
+      <h2>Mesurer le décalage</h2>
+      <p>Regarde et écoute la sortie de la chaîne, puis donne le retard audio à régler, en millisecondes.</p>
     </div>
   </div>
+  <div class="menu-note">Il faut deux appareils : ouvre cette page sur les deux.</div>
+  <div class="app-version" id="app-version">v9</div>
 </div>
 
-<!-- ===== GÉNÉRATEUR — Home patterns ===== -->
+<!-- ===== GÉNÉRATEUR — choix du signal ===== -->
 <div id="home" class="screen">
+  <div class="az-warn" id="gen-warn" hidden>Cet appareil vient de servir d'Analyseur : sur iPhone, le son peut ensuite sortir affaibli. Recharge la page avant de l'utiliser comme Générateur.<br><button class="az-link" onclick="location.reload()">Recharger la page</button></div>
   <div class="home-header">
     <h1>Générateur</h1>
-    <p>Patterns de synchronisation</p>
+    <p>Choisis un signal</p>
   </div>
-  <div class="section-label">Tests de synchronisation</div>
-  <div class="patterns-grid">
+  <div class="patterns-grid v9">
+    <div class="pattern-card featured" onclick="selectPattern('delaytest')">
+      <div class="pattern-thumb"><canvas id="thumb-delaytest"></canvas></div>
+      <div class="pattern-info"><span class="pattern-tag">Pour l'Analyseur</span><h3>Signal de mesure ⚡</h3><p>Flash blanc + bip. Volume au maximum.</p></div>
+    </div>
+    <div class="pattern-sub">Autres mires — contrôle à l'œil, sans Analyseur</div>
     <div class="pattern-card" onclick="selectPattern('counter')">
       <div class="pattern-thumb"><canvas id="thumb-counter"></canvas></div>
       <div class="pattern-info"><h3>Compteur + Bip</h3><p>Flash et bip alterné chaque seconde</p></div>
@@ -485,23 +717,19 @@ html, body {
     </div>
     <div class="pattern-card" onclick="selectPattern('ntp')">
       <div class="pattern-thumb"><canvas id="thumb-ntp"></canvas></div>
-      <div class="pattern-info"><h3>Timecode NTP</h3><p>Aiguille rotative + TC — mesure de delay</p></div>
-    </div>
-    <div class="pattern-card" onclick="selectPattern('delaytest')">
-      <div class="pattern-thumb"><canvas id="thumb-delaytest"></canvas></div>
-      <div class="pattern-info"><h3>Delay Test ⚡</h3><p>Flash blanc + bip — pour mode Analyseur</p></div>
+      <div class="pattern-info"><h3>Timecode NTP</h3><p>Aiguille rotative + TC — heure réelle</p></div>
     </div>
   </div>
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot even"></div>Sec. paires — 1000 Hz</div>
-    <div class="legend-item"><div class="legend-dot odd"></div>Sec. impaires — 500 Hz</div>
+    <div class="legend-item"><div class="legend-dot even"></div>Pair — bip aigu</div>
+    <div class="legend-item"><div class="legend-dot odd"></div>Impair — bip grave</div>
   </div>
   <button class="back-btn" onclick="goBackToHomeMode()">← Retour au menu</button>
 </div>
 
 <div id="fps-select" class="screen">
   <div class="fps-header">
-    <h2>Framerate du projet</h2>
+    <h2>Cadence du projet (images/s)</h2>
     <span class="tag" id="tag-pattern">—</span>
   </div>
   <div class="fps-grid" id="fps-grid"></div>
@@ -511,6 +739,8 @@ html, body {
 <div id="countdown" class="screen">
   <div id="countdown-number">3</div>
   <div id="countdown-label">Préparation…</div>
+  <div id="countdown-hint" class="menu-note" hidden>L'écran ne doit pas s'éteindre : Réglages → Luminosité et affichage → Verrouillage auto → Jamais.</div>
+  <button class="back-btn cd-cancel" onclick="cancelCountdown()">Annuler</button>
 </div>
 
 <div id="player" class="screen">
@@ -530,134 +760,220 @@ html, body {
   </div>
 </div>
 
-<!-- ===== ANALYSEUR ===== -->
+<!-- ===== ANALYSEUR — accueil ===== -->
 <div id="analyzer-setup" class="screen">
   <div class="az-header">
-    <h2>Mode Analyseur</h2>
-    <p>Mesure du délai A/V</p>
+    <h2>Analyseur</h2>
+    <p>Mesure du décalage son / image</p>
   </div>
 
-  <div class="az-section">
-    <div class="label">Framerate de référence</div>
-    <div class="az-fps-grid" id="az-fps-grid"></div>
-  </div>
+  <div class="az-section" id="az-error-slot" hidden></div>
 
   <div class="az-section">
-    <div class="label">Nombre de passes (5 à 20) — plus = meilleure précision</div>
-    <div class="az-passes">
-      <button class="az-passes-btn" id="az-passes-minus" onclick="adjustPasses(-1)">−</button>
-      <div class="az-passes-val" id="az-passes-val">5</div>
-      <button class="az-passes-btn" id="az-passes-plus" onclick="adjustPasses(+1)">+</button>
-    </div>
+    <div class="az-calib none" id="az-calib"></div>
   </div>
 
-  <div class="az-section">
+  <div class="az-actions">
+    <button class="az-start-btn" id="az-btn-measure" onclick="startAnalyzer('measure')">▶ Mesurer</button>
+    <button class="az-second-btn" id="az-btn-calib" onclick="askCalib()">◎ Étalonner (sans la chaîne)</button>
+  </div>
+
+  <details class="az-section az-details" id="az-howto" open>
+    <summary>Comment faire</summary>
     <div class="az-info-card">
-      <strong>Setup recommandé :</strong><br>
-      1. Lance "Delay Test" sur le Device 1 (volume audible).<br>
-      2. Pointe la caméra du Device 2 sur l'écran du Device 1 (cadrer plein écran, distance ~30 cm).<br>
-      3. Évite l'éclairage direct (lumière ambiante stable).<br>
-      4. Appuie sur Démarrer — la mesure prend ~<span id="az-eta">5</span> s.
+      <ol>
+        <li>Sur l'autre appareil : <b>Générateur → Signal de mesure</b>, volume au maximum, devant la caméra et le micro de la chaîne.</li>
+        <li>Ici : appuie sur <b>Mesurer</b>, puis vise le moniteur de sortie, tout près de l'enceinte (ou du casque) qui diffuse le son de la chaîne.</li>
+        <li>Cet appareil ne doit pas entendre le Générateur en direct. Dès que flash et bip sont repérés, ne bouge plus : environ <span id="az-eta">15</span> s.</li>
+      </ol>
+      <p style="margin-top:8px">À savoir : le retard propre du moniteur et de l'enceinte que tu vises est inclus dans la mesure. Décalage mesurable : jusqu'à 2,5 s.</p>
     </div>
-  </div>
+  </details>
 
-  <div class="az-section">
-    <div class="az-toggle" id="az-debug-toggle" onclick="toggleDebug()">
-      <div class="az-toggle-label">
-        Mode debug
-        <small>Affiche luminance, RMS et seuils en temps réel</small>
+  <details class="az-section az-details">
+    <summary>Réglages</summary>
+    <div class="inner">
+      <div>
+        <div class="label">Nombre de flashs mesurés (10 à 30) — plus = plus précis</div>
+        <div class="az-passes">
+          <button class="az-passes-btn" id="az-passes-minus" onclick="adjustPasses(-1)">−</button>
+          <div class="az-passes-val" id="az-passes-val">10</div>
+          <button class="az-passes-btn" id="az-passes-plus" onclick="adjustPasses(+1)">+</button>
+        </div>
       </div>
-      <div class="az-toggle-switch"></div>
+      <div class="az-toggle" id="az-compat-toggle" onclick="toggleCompat()">
+        <div class="az-toggle-label">
+          Écoute en mode compatibilité
+          <small>À essayer si le bip n'est jamais reconnu (anciens iPhone)</small>
+        </div>
+        <div class="az-toggle-switch"></div>
+      </div>
+      <div class="az-toggle" id="az-debug-toggle" onclick="toggleDebug()">
+        <div class="az-toggle-label">
+          Affichage technique
+          <small>Niveaux, seuils et horodatage en temps réel</small>
+        </div>
+        <div class="az-toggle-switch"></div>
+      </div>
     </div>
-  </div>
+  </details>
 
-  <button class="az-start-btn" onclick="startAnalyzerRun()">▶ Démarrer la mesure</button>
-  <div style="display:flex; gap:10px; width:100%; max-width:380px">
-    <button class="back-btn" onclick="showAnalyzerHistory()" style="flex:1">📊 Historique</button>
-    <button class="back-btn" onclick="goBackToHomeMode()" style="flex:1">← Menu</button>
+  <div class="az-row">
+    <button class="back-btn" onclick="showAnalyzerHistory()">Historique</button>
+    <button class="back-btn" onclick="goBackToHomeMode()">← Menu</button>
   </div>
 </div>
 
+<!-- ===== ANALYSEUR — avant l'étalonnage ===== -->
+<div id="analyzer-calib" class="screen">
+  <div class="az-header">
+    <h2>Étalonnage</h2>
+    <p>Sans passer par la chaîne</p>
+  </div>
+  <div class="az-section">
+    <div class="az-info-card">
+      <ol>
+        <li>Pose le <b>Générateur</b> juste en face de cet appareil, à environ 30 cm.</li>
+        <li>Sur le Générateur : <b>Signal de mesure</b> lancé, volume au maximum.</li>
+        <li>Vise directement son écran. <b>Ne vise pas le moniteur de la chaîne</b>, et coupe le son de la régie s'il s'entend ici.</li>
+        <li>Ne bouge plus : environ <span id="az-calib-eta">25</span> s.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="az-section">
+    <div class="az-calib">L'étalonnage mesure le décalage propre des deux appareils (écran, haut-parleur, caméra, micro) pour le retirer des mesures suivantes. À refaire si tu changes l'un des deux appareils ou la sortie son du Générateur (pas de Bluetooth).</div>
+  </div>
+  <button class="az-start-btn" onclick="startAnalyzer('calib')">C'est en place — étalonner</button>
+  <button class="back-btn" onclick="backToAnalyzerSetup()">Annuler</button>
+</div>
+
+<!-- ===== ANALYSEUR — visée et mesure ===== -->
 <div id="analyzer-run" class="screen">
   <div class="az-video-wrap">
-    <video id="analyzer-video" playsinline muted></video>
+    <video id="analyzer-video" playsinline muted autoplay></video>
   </div>
   <div class="az-overlay">
     <div class="az-overlay-top">
-      <span class="info" id="az-run-info">— · 25 fps · 5 passes</span>
-      <button class="az-exit-btn" onclick="abortAnalyzer()">✕ Annuler</button>
+      <div>
+        <span class="info" id="az-run-info">Mesure</span>
+        <div class="az-src-names" id="az-src-names"></div>
+      </div>
+      <div class="az-top-btns">
+        <button class="az-exit-btn" onclick="toggleSourcePanel()">Source</button>
+        <button class="az-exit-btn" onclick="abortAnalyzer()">✕ Annuler</button>
+      </div>
+    </div>
+    <div class="az-source-panel" id="az-source-panel">
+      <label for="src-video">Image</label>
+      <select id="src-video" onchange="onSourceChange()"></select>
+      <label for="src-audio">Son</label>
+      <select id="src-audio" onchange="onSourceChange()"></select>
+      <button class="az-link" onclick="toggleSourcePanel()">Fermer</button>
     </div>
     <div class="az-progress">
-      <div class="az-progress-counter">Passe</div>
-      <div class="az-progress-num"><span id="az-pass-num">0</span> / <span id="az-pass-target">5</span></div>
-      <div class="az-progress-bar"><div class="az-progress-fill" id="az-progress-fill"></div></div>
-      <div class="az-progress-label" id="az-status">En attente du signal…</div>
+      <div class="az-phase" id="az-phase">Préparation…</div>
+      <div class="az-checks" id="az-checks">
+        <div class="az-check" id="chk-flash"><span class="dot"></span><span>Flash</span><span class="st" id="chk-flash-st">pas encore vu</span></div>
+        <div class="az-check" id="chk-bip"><span class="dot"></span><span>Bip</span><span class="st" id="chk-bip-st">pas encore entendu</span></div>
+      </div>
+      <div id="az-count" hidden>
+        <div class="az-progress-num"><span id="az-pass-num">0</span> / <span id="az-pass-target">10</span></div>
+        <div class="az-count-unit">flashs mesurés</div>
+      </div>
+      <div class="az-progress-bar" id="az-bar" hidden><div class="az-progress-fill" id="az-progress-fill"></div></div>
+      <div class="az-progress-label" id="az-status">Autorise la caméra et le micro…</div>
     </div>
     <div class="az-vus">
       <div class="az-vu-row">
-        <span class="az-vu-label">VIDÉO</span>
+        <span class="az-vu-label">IMAGE</span>
         <div class="az-vu-bar"><div class="az-vu-fill" id="az-vu-video"></div></div>
         <span class="az-vu-flash" id="az-vu-flash"></span>
       </div>
       <div class="az-vu-row">
-        <span class="az-vu-label">AUDIO</span>
+        <span class="az-vu-label">SON</span>
         <div class="az-vu-bar"><div class="az-vu-fill audio" id="az-vu-audio"></div></div>
         <span class="az-vu-flash" id="az-vu-bip"></span>
       </div>
     </div>
   </div>
-  <!-- V8.1.1/V8.1.3 — Panneau debug -->
   <div class="az-debug-panel" id="az-debug-panel">
-    <div class="row"><span class="l">Cam fps</span><span class="v" id="dbg-cam-fps">—</span></div>
-    <div class="row"><span class="l">Audio SR</span><span class="v" id="dbg-audio-sr">—</span></div>
+    <div class="row"><span class="l">Caméra</span><span class="v" id="dbg-cam">—</span></div>
+    <div class="row"><span class="l">Audio</span><span class="v" id="dbg-audio">—</span></div>
     <div class="sep"></div>
     <div class="row"><span class="l">LUM</span><span class="v" id="dbg-lum">—</span></div>
     <div class="row"><span class="l">LUM seuil</span><span class="v" id="dbg-lum-thr">—</span></div>
-    <div class="row"><span class="l">RMS</span><span class="v" id="dbg-rms">—</span></div>
-    <div class="row"><span class="l">RMS seuil</span><span class="v" id="dbg-rms-thr">—</span></div>
+    <div class="row"><span class="l">SON dB</span><span class="v" id="dbg-env">—</span></div>
+    <div class="row"><span class="l">SON seuil</span><span class="v" id="dbg-env-thr">—</span></div>
     <div class="sep"></div>
-    <div class="row"><span class="l">Flashes</span><span class="v" id="dbg-flashes">0</span></div>
+    <div class="row"><span class="l">Flashs</span><span class="v" id="dbg-flashes">0</span></div>
     <div class="row"><span class="l">Bips</span><span class="v" id="dbg-bips">0</span></div>
+    <div class="row"><span class="l">Sons rejetés</span><span class="v" id="dbg-noise">0</span></div>
     <div class="sep"></div>
-    <div class="row"><span class="l">Dernier Δ</span><span class="v" id="dbg-last-delta">—</span></div>
+    <div class="row"><span class="l">Calage</span><span class="v" id="dbg-lock">—</span></div>
   </div>
 </div>
 
+<!-- ===== ANALYSEUR — résultat ===== -->
 <div id="analyzer-result" class="screen">
+  <div class="az-result-tag" id="result-tag">—</div>
   <div class="az-result-mention" id="result-mention">—</div>
   <div class="az-result-ms" id="result-ms">— ms</div>
-  <div class="az-result-frames" id="result-frames">— images</div>
-  <div class="az-result-bar">
-    <div class="az-result-bar-zone zone-green" id="bar-green"></div>
-    <div class="az-result-bar-zone zone-orange" id="bar-orange-l"></div>
-    <div class="az-result-bar-zone zone-orange" id="bar-orange-r"></div>
-    <div class="az-result-bar-zone zone-red" id="bar-red-l"></div>
-    <div class="az-result-bar-zone zone-red" id="bar-red-r"></div>
-    <div class="az-result-bar-marker" id="bar-marker"></div>
+  <div class="az-action-card" id="result-action">—</div>
+  <div class="az-warn" id="result-warn" hidden></div>
+  <div class="az-result-frames" id="result-frames-row">
+    <span id="result-frames">—</span>
+    <select class="az-fps-select" id="result-fps" onchange="onFpsChange()" aria-label="Cadence d'image"></select>
+    <span>i/s</span>
   </div>
-  <div class="az-result-stddev" id="result-stddev">—</div>
-  <div class="az-result-actions">
-    <button class="az-result-btn" onclick="showAnalyzerHistory()">📊 Historique</button>
-    <button class="az-result-btn primary" onclick="restartAnalyzer()">↻ Nouvelle mesure</button>
+  <div class="az-legend" id="result-legend">vert &lt; 40 ms · orange 40–80 ms · rouge &gt; 80 ms</div>
+  <div class="az-quality" id="result-quality"></div>
+  <div class="az-result-stddev" id="result-detail">—</div>
+  <details class="az-details az-result-more" id="result-more">
+    <summary>Détails</summary>
+    <div class="body" id="result-more-body"></div>
+  </details>
+  <button class="az-start-btn" id="result-primary">↻ Remesurer</button>
+  <div class="az-row">
+    <button class="back-btn" id="result-copy" onclick="shareResult()">Copier le résultat</button>
+    <button class="back-btn" id="result-secondary">—</button>
   </div>
-  <button class="back-btn" onclick="goBackToHomeMode()" style="margin-top:8px">← Menu</button>
+  <div class="az-row">
+    <button class="back-btn" onclick="showAnalyzerHistory()">Historique</button>
+    <button class="back-btn" onclick="goBackToHomeMode()">← Menu</button>
+  </div>
 </div>
 
-<!-- V8.1.3 — Écran Historique -->
+<!-- ===== ANALYSEUR — historique ===== -->
 <div id="analyzer-history" class="screen">
   <div class="az-header">
-    <h2>Historique des mesures</h2>
-    <p>Super-médiane multi-sessions</p>
+    <h2>Historique</h2>
+    <p>Mesures et étalonnages</p>
   </div>
   <div id="hist-content"></div>
   <div class="hist-actions">
-    <button class="az-result-btn" onclick="clearHistoryConfirm()">🗑 Effacer</button>
+    <button class="az-result-btn" id="hist-clear" onclick="clearHistoryConfirm()">Effacer l'historique</button>
     <button class="az-result-btn primary" onclick="historyBack()">← Retour</button>
   </div>
 </div>
 
 <script>
 'use strict';
+// =====================================================================
+// Sync Test Pro v9.0.0 — fichier unique, zéro dépendance.
+//
+// RÈGLES À NE PAS CASSER (voir 00_CLAUDE/INSTRUCTIONS.md)
+//  - Les bips sont pré-programmés par lots sur l'horloge audio matérielle
+//    (audioCtx.currentTime), jamais déclenchés depuis requestAnimationFrame.
+//  - L'horloge visuelle du Générateur est l'horloge audio (ici interpolée
+//    entre deux mises à jour, voir « HORLOGE AUDIO LISSÉE »).
+//    Seul le pattern Timecode NTP suit l'horloge murale.
+//  - Un seul AudioContext, créé au premier geste, jamais fermé.
+//  - MP3 silencieux en boucle (bouton silencieux iOS) : Générateur uniquement.
+//  - L'Analyseur n'émet aucun son ; micro sans AGC, ni réduction de bruit,
+//    ni annulation d'écho.
+// =====================================================================
+const APP_VERSION = '9.0.0';
+const $ = id => document.getElementById(id);
 
 // ========== CONSTANTES PARTAGÉES ==========
 const FREQ_EVEN_COUNTER=1000, FREQ_ODD_COUNTER=500;
@@ -665,9 +981,19 @@ const FREQ_EVEN_BOUNCE=800, FREQ_ODD_BOUNCE=400;
 const COL_EVEN='#3b82f6', COL_ODD='#f97316';
 const COL_EVEN_DIM='rgba(59,130,246,', COL_ODD_DIM='rgba(249,115,22,';
 const BEEP_DUR=0.05, SCHEDULE_AHEAD=5, BEEP_GAIN=1.6;
-// V8.1.1 — Bip Delay Test boosté +6 dB pour détection micro à distance (~20 cm écran)
-const BEEP_GAIN_DELAYTEST = 3.2;  // ≈ +6 dB vs BEEP_GAIN
-const BEEP_DUR_DELAYTEST = 0.05;  // 50 ms (vs 30 ms en v8.1) — plus de présence audio
+const START_LEAD = 0.3;             // s d'avance avant le premier bip (laisse l'horloge lissée se caler)
+const DISPLAY_LATENCY_FRAMES = 1;   // hypothèse : une image dessinée est visible un rafraîchissement plus tard (non mesuré)
+
+// Signal de mesure (ex « Delay Test »)
+const MES_GAIN = 3.2;        // inchangé depuis v8.1.1 (portée validée sur le terrain)
+const MES_TONE_HOLD = 0.045; // s de tenue à plein niveau
+const MES_TONE_DUR = 0.06;   // s au total (tenue + extinction)
+const MES_FLASH_DUR = 0.15;  // s de flash blanc : au moins 3 images d'une caméra à 25-30 i/s
+// Cadence irrégulière : intervalle = 0,80 s + 75 ms × (rang tiré sans remise parmi 8 + fraction aléatoire)
+// → de 0,80 à 1,40 s. Séquence fixe de 320 événements (~6 min) qui se répète.
+// La graine a été choisie par calcul exhaustif : sur toute fenêtre de 5 à 30 événements consécutifs,
+// jamais plus de la moitié des couples ne peut s'aligner sur un mauvais décalage (4 au pire pour 10).
+const MES_INT_MIN = 0.80, MES_INT_STEP = 0.075, MES_BASES = 8, MES_PERIOD = 320, MES_SEED = 180;
 
 const ALL_FPS=[
   {fps:24,scan:'p'},{fps:25,scan:'p'},{fps:30,scan:'p'},
@@ -676,14 +1002,39 @@ const ALL_FPS=[
   {fps:100,scan:'p'},{fps:120,scan:'p'}
 ];
 const NTP_FPS=[{fps:25,scan:'p'},{fps:30,scan:'p'},{fps:50,scan:'p'},{fps:60,scan:'p'},{fps:120,scan:'p'}];
-const ANALYZER_FPS=[23.98,24,25,29.97,30,50,59.94,60];
+const RESULT_FPS=[23.98,24,25,29.97,30,50,59.94,60];
+
+// ========== PRÉFÉRENCES ET STOCKAGE LOCAL ==========
+const PREFS_KEY='syncTestPro9.prefs', HIST_KEY='syncTestPro9.history', CALIB_KEY='syncTestPro9.calib';
+const MAX_HISTORY = 50;
+const PASSES_MIN=10, PASSES_MAX=30; // en dessous de 10 flashs, des coïncidences peuvent encore passer pour une mesure (simulé : 1 % à 8, 0 à 10)
+function loadJSON(k,def){try{const r=localStorage.getItem(k);return r?JSON.parse(r):def;}catch(e){return def;}}
+function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+const prefs=Object.assign({passes:10,fps:25,debug:false,compat:false,vId:'',aId:'',lastKey:'',done:false},loadJSON(PREFS_KEY,{})||{});
+prefs.passes=Math.max(PASSES_MIN,Math.min(PASSES_MAX,parseInt(prefs.passes,10)||10));
+if(!RESULT_FPS.includes(prefs.fps))prefs.fps=25;
+function savePrefs(){saveJSON(PREFS_KEY,prefs);}
+
+// ========== PETITS OUTILS ==========
+const fr1 = v => v.toFixed(1).replace('.',',');
+function signed(v){const r=Math.round(v);return(r>0?'+':r<0?'−':'')+Math.abs(r)+' ms';}
+function timeStr(ts){return new Date(ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+function dateStr(ts){return new Date(ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function medianOf(a){const s=[...a].sort((x,y)=>x-y),n=s.length;if(!n)return NaN;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;}
 
 // ========== ÉTAT GÉNÉRATEUR ==========
+let appMode='menu'; // menu | gen | ana
 let pattern=null,fps=null,scan=null;
 let audioCtx=null,masterGain=null;
-let animId=null,playing=false,hudTimer=null;
-let audioT0=0,perfT0=0,scheduledUpTo=-1;
+let animId=null,playing=false,hudTimer=null,playerResize=null,cdToken=0;
+let audioT0=0,scheduledUpTo=-1;
 let silentAudio=null,mediaSessionActive=false;
+let wakeLock=null,wantAwake=false;
+let anaUsed=false; // le micro a été ouvert sur cet appareil depuis le chargement de la page
+// WebKit (Safari, et tous les navigateurs sur iOS) : l'horodatage d'une image y marque la fin de sa capture
+const IS_WEBKIT=/AppleWebKit/.test(navigator.userAgent||'')&&!/Chrome\/|Chromium|Edg\/|OPR\/|Android/.test(navigator.userAgent||'');
+const IS_IOS=/iP(hone|ad|od)/.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
 // NTP: wall clock to audio clock mapping
 let ntpWallT0=0, ntpAudioT0=0, ntpScheduledUpToSec=-1;
@@ -691,7 +1042,7 @@ let ntpOffsetMs = 0;
 
 const names={
   counter:'Compteur + Bip',bounce:'Bouncing Ball',
-  ntp:'Timecode NTP',delaytest:'Delay Test'
+  ntp:'Timecode NTP',delaytest:'Signal de mesure'
 };
 
 function isEven(s){return s%2===0;}
@@ -699,21 +1050,36 @@ function colFor(s){return isEven(s)?COL_EVEN:COL_ODD;}
 function colDim(s,a){return(isEven(s)?COL_EVEN_DIM:COL_ODD_DIM)+a+')';}
 
 // ========== AUDIO iOS (partagé) ==========
+// L'état réel de l'élément <audio> fait foi : iOS peut le mettre en pause tout seul (appel, Siri, écouteurs…)
 function activateMediaSession(){
-  if(mediaSessionActive)return;silentAudio=document.getElementById('silent-audio');
-  if(silentAudio){silentAudio.volume=0.01;const p=silentAudio.play();if(p)p.catch(()=>{});mediaSessionActive=true;}
+  silentAudio=silentAudio||$('silent-audio');if(!silentAudio)return;
+  if(!silentAudio.paused){mediaSessionActive=true;return;}
+  mediaSessionActive=true;silentAudio.volume=0.01;
+  const p=silentAudio.play();if(p&&p.catch)p.catch(()=>{mediaSessionActive=false;});
 }
-function deactivateMediaSession(){if(silentAudio&&mediaSessionActive){silentAudio.pause();mediaSessionActive=false;}}
+function deactivateMediaSession(){
+  silentAudio=silentAudio||$('silent-audio');
+  if(silentAudio&&!silentAudio.paused)silentAudio.pause();
+  mediaSessionActive=false;
+}
+// iOS 16.4+ : catégorie « lecture » en Générateur (insensible au bouton silencieux, sortie haut-parleur) ;
+// automatique ailleurs. Complète le MP3 silencieux, ne le remplace pas.
+function setAudioSession(type){try{if(navigator.audioSession)navigator.audioSession.type=type;}catch(e){}}
 function ensureAudio(){
-  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended')audioCtx.resume();
+  if(!audioCtx){
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    audioCtx.onstatechange=()=>clkReset();
+  }
+  if(audioCtx.state!=='running'){try{const p=audioCtx.resume();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
+  // WebKit : contexte annoncé « running » mais horloge immobile après un retour d'arrière-plan → suspendre puis reprendre
+  else if(audioStall){try{audioCtx.suspend().then(()=>audioCtx.resume()).catch(()=>{});}catch(e){}}
 }
 function unlockAndActivate(){
   ensureAudio();
-  const buf=audioCtx.createBuffer(1,1,22050);const src=audioCtx.createBufferSource();
-  src.buffer=buf;src.connect(audioCtx.destination);src.start(0);
-  // Active le silent MP3 uniquement si on n'est pas en mode analyseur
-  if(analyzerState==='idle') activateMediaSession();
+  try{const buf=audioCtx.createBuffer(1,1,22050);const src=audioCtx.createBufferSource();
+  src.buffer=buf;src.connect(audioCtx.destination);src.start(0);}catch(e){}
+  // MP3 silencieux : seulement en mode Générateur (l'Analyseur ne doit rien émettre, le menu non plus)
+  if(appMode==='gen') activateMediaSession();
 }
 document.addEventListener('touchstart',unlockAndActivate,true);
 document.addEventListener('mousedown',unlockAndActivate,true);
@@ -731,6 +1097,18 @@ function scheduleBeep(time,freq,dur,gain){
   g.gain.exponentialRampToValueAtTime(0.001,time+dur);o.connect(g);g.connect(masterGain);
   o.start(time);o.stop(time+dur+0.02);}catch(e){}
 }
+// Bip du signal de mesure : attaque immédiate, tenue 45 ms, extinction 15 ms.
+// La tenue donne à l'Analyseur un plateau net (repérage à mi-hauteur indépendant du volume).
+function scheduleTone(time,freq){
+  if(!audioCtx||!masterGain)return;
+  try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.value=freq;
+  g.gain.setValueAtTime(MES_GAIN,time);
+  g.gain.setValueAtTime(MES_GAIN,time+MES_TONE_HOLD);
+  g.gain.linearRampToValueAtTime(0,time+MES_TONE_DUR);
+  o.connect(g);g.connect(masterGain);
+  o.start(time);o.stop(time+MES_TONE_DUR+0.02);}catch(e){}
+}
 function beepNow(freq,dur){
   ensureAudio();try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.type='sine';o.frequency.value=freq;const t=audioCtx.currentTime;
@@ -738,17 +1116,13 @@ function beepNow(freq,dur){
   o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+dur+0.02);}catch(e){}
 }
 
-// Scheduling for relative-time patterns (counter, bounce, delaytest)
+// Bips des patterns à la seconde (compteur, balle) : un bip à audioT0 + s
 function scheduleBeepsBatch(from,to){
   for(let s=from;s<=to;s++){const bt=audioT0+s;if(bt<audioCtx.currentTime-0.01)continue;
   let freq;
   if(pattern==='bounce')freq=isEven(s)?FREQ_EVEN_BOUNCE:FREQ_ODD_BOUNCE;
   else freq=isEven(s)?FREQ_EVEN_COUNTER:FREQ_ODD_COUNTER;
-  // V8.1.1 — Delay Test : bip 50 ms boosté +6 dB pour détection micro à distance
-  const isDelay = (pattern==='delaytest');
-  const dur = isDelay ? BEEP_DUR_DELAYTEST : BEEP_DUR;
-  const gain = isDelay ? BEEP_GAIN_DELAYTEST : BEEP_GAIN;
-  scheduleBeep(bt,freq,dur,gain);}
+  scheduleBeep(bt,freq,BEEP_DUR,BEEP_GAIN);}
   scheduledUpTo=to;
 }
 function maintainSchedule(elSec){const t=Math.floor(elSec)+SCHEDULE_AHEAD;if(t>scheduledUpTo)scheduleBeepsBatch(scheduledUpTo+1,t);}
@@ -803,32 +1177,127 @@ function updateOffsetLabel(){
   el.textContent=`Offset: ${sign}${ntpOffsetMs} ms`;
 }
 
+// ========== HORLOGE AUDIO LISSÉE ==========
+// audioCtx.currentTime n'avance que par paquets (2,7 ms à plus de 20 ms selon l'appareil).
+// Lu tel quel à chaque image, il fait trembler le flash par rapport au bip.
+// On retient donc, sur ~2 s, le plus grand écart (horloge audio − horloge du navigateur) :
+// c'est la valeur lue juste après une mise à jour, la plus proche de la vérité.
+// → audioTimeAt(t) donne l'heure audio à un instant quelconque du navigateur, et inversement.
+const CLK_N = 128;
+const clk={buf:new Float64Array(CLK_N),i:0,n:0,off:null,last:-1,step:0.003};
+function clkReset(){clk.i=0;clk.n=0;clk.off=null;}
+function clkSample(){
+  if(!audioCtx||audioCtx.state!=='running')return;
+  const c=audioCtx.currentTime,d=c-performance.now()/1000;
+  // plus grand pas d'avance observé de l'horloge audio (oublié lentement)
+  if(clk.last>=0){const st=c-clk.last;if(st>0&&st<0.2)clk.step=Math.max(st,clk.step*0.995);}
+  clk.last=c;
+  // saut en arrière de plus de 3 pas (borné 15–60 ms) : le son s'est arrêté puis a repris, on repart de zéro
+  if(clk.off!==null&&d<clk.off-Math.min(0.06,Math.max(0.015,3*clk.step)))clkReset();
+  clk.buf[clk.i]=d;clk.i=(clk.i+1)%CLK_N;if(clk.n<CLK_N)clk.n++;
+  let m=-Infinity;for(let k=0;k<clk.n;k++)if(clk.buf[k]>m)m=clk.buf[k];
+  clk.off=m;
+}
+// Horloge audio immobile alors que le contexte se dit « running » (bug WebKit au retour d'arrière-plan)
+let stallCT=-1,stallAt=0,audioStall=false;
+function checkStall(now){
+  if(!audioCtx){audioStall=false;return;}
+  const c=audioCtx.currentTime;
+  if(c!==stallCT){stallCT=c;stallAt=now;audioStall=false;}
+  else audioStall=audioCtx.state==='running'&&now-stallAt>400;
+}
+function audioPaused(){return!audioCtx||audioCtx.state!=='running'||audioStall;}
+function audioTimeAt(perfMs){
+  if(!audioCtx)return 0;
+  // son en pause (appel, verrouillage…) ou horloge pas encore calée : on s'en tient à l'horloge brute, figée
+  if(clk.off===null||audioPaused())return audioCtx.currentTime;
+  return perfMs/1000+clk.off;
+}
+function perfMsOfAudio(t){return(t-clk.off)*1000;}
+
+// Battement permanent : entretient l'horloge lissée et estime la période de rafraîchissement de l'écran
+let refreshMs=16.7, hbLast=0, hbSlow=0;
+function heartbeat(ts){
+  if(hbLast){
+    const d=ts-hbLast;
+    if(d>2&&d<refreshMs*1.5){refreshMs+=(d-refreshMs)*0.1;hbSlow=0;}
+    else if(d>=refreshMs*1.5&&d<100){if(++hbSlow>20){refreshMs=d;hbSlow=0;}}
+  }
+  hbLast=ts;clkSample();checkStall(ts);
+  if(ts-outLatAt>1000){outLatAt=ts;pollOutLatency();}
+  requestAnimationFrame(heartbeat);
+}
+// Latence de sortie audio annoncée par le navigateur : outputLatency (Chrome, Firefox, Safari 18.4+),
+// à défaut baseLatency, à défaut 0. Relue une fois par seconde et adoptée seulement quand trois
+// lectures de suite concordent, pour que le flash ne saute pas d'une image en cours de lecture.
+let outLat=0,outLatAt=0,outLatBuf=[];
+function readOutLatency(){
+  if(!audioCtx)return 0;
+  const o=audioCtx.outputLatency;if(typeof o==='number'&&o>0&&o<2)return o;
+  const b=audioCtx.baseLatency;if(typeof b==='number'&&b>0&&b<2)return b;
+  return 0;
+}
+function pollOutLatency(){
+  const v=readOutLatency();outLatBuf.push(v);if(outLatBuf.length>3)outLatBuf.shift();
+  if(outLatBuf.length===3&&Math.max.apply(null,outLatBuf)-Math.min.apply(null,outLatBuf)<0.003)outLat=outLatBuf[1];
+}
+function outLatency(){return outLat;}
+// Heure audio du son qui sera ENTENDU au moment où l'image dessinée maintenant sera VISIBLE.
+// ts = horodatage fourni par requestAnimationFrame.
+function heardTimeAtDisplay(ts){
+  return audioTimeAt(ts+refreshMs*DISPLAY_LATENCY_FRAMES)-outLatency();
+}
+
+// ========== VEILLE DE L'ÉCRAN ==========
+async function keepAwake(on){
+  wantAwake=!!on;
+  try{
+    if(on){
+      if('wakeLock' in navigator&&!wakeLock&&document.visibilityState==='visible'){
+        const w=await navigator.wakeLock.request('screen');
+        if(!wantAwake||wakeLock){try{await w.release();}catch(e){}return;} // libéré entre-temps : pas de verrou orphelin
+        wakeLock=w;
+        w.addEventListener('release',()=>{if(wakeLock===w)wakeLock=null;});
+      }
+    }else if(wakeLock){const w=wakeLock;wakeLock=null;await w.release();}
+  }catch(e){}
+}
+// Le verrou d'écran n'existe pas avant iOS 16.4 et reste sans effet dans une appli posée sur l'écran d'accueil (jusqu'à 18.4)
+function wakeLockUseful(){return('wakeLock' in navigator)&&navigator.standalone!==true;}
+
 // ========== NAVIGATION ==========
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  $(id).classList.add('active');
 }
 function enterGenerator(){
-  // Mode Générateur : on réactive le silent MP3 au prochain tap
-  showScreen('home');
+  appMode='gen';setAudioSession('playback');ensureAudio();activateMediaSession();
+  $('gen-warn').hidden=!(anaUsed&&IS_IOS);
+  showScreen('home');$('home').scrollTop=0;
 }
 function enterAnalyzer(){
-  // Mode Analyseur : pas de son émis, on désactive silent MP3
-  deactivateMediaSession();
-  buildAnalyzerSetupUI();
-  showScreen('analyzer-setup');
+  // Mode Analyseur : aucun son émis, on coupe le MP3 silencieux
+  appMode='ana';deactivateMediaSession();setAudioSession('auto');
+  clearAnaError();$('az-howto').open=!prefs.done; // mode d'emploi replié après une première mesure réussie
+  refreshSetup();
+  showScreen('analyzer-setup');$('analyzer-setup').scrollTop=0;
 }
 function goBackToHomeMode(){
-  // Cleanup générateur
+  cancelCountdown(true);
   if(playing) stopPlayer();
-  // Cleanup analyseur
-  if(analyzerState!=='idle') abortAnalyzer(true);
+  if(ana.state!=='idle') abortAnalyzer(true);
+  deactivateMediaSession();setAudioSession('auto');
+  appMode='menu';
   showScreen('home-mode');
 }
 
-function selectPattern(p){pattern=p;document.getElementById('tag-pattern').textContent=names[p];buildFpsGrid();showScreen('fps-select');}
+function selectPattern(p){
+  pattern=p;
+  if(p==='delaytest'){fps=null;scan=null;startCountdown();return;} // le signal de mesure ne dépend d'aucun framerate
+  $('tag-pattern').textContent=names[p];buildFpsGrid();showScreen('fps-select');
+}
 function buildFpsGrid(){
-  const grid=document.getElementById('fps-grid');const list=pattern==='ntp'?NTP_FPS:ALL_FPS;
+  const grid=$('fps-grid');const list=pattern==='ntp'?NTP_FPS:ALL_FPS;
   grid.innerHTML='';list.forEach(item=>{const btn=document.createElement('div');btn.className='fps-btn';
   btn.onclick=()=>selectFps(item.fps,item.scan);
   btn.innerHTML=`<span class="v">${item.fps}</span><span class="l">${item.scan==='i'?'entrelacé':'progressif'}</span>`;
@@ -886,58 +1355,167 @@ function drawThumbs(){
   x.fillStyle='rgba(255,255,255,0.5)';x.fillText('1000/500 Hz · 2 frames',80,148);
   x.fillStyle='rgba(0,0,0,0.5)';x.fillText('pour Analyseur',240,148);
 }
+// Vignette du signal de mesure : même dessin, mention mise à jour
+function drawThumbMesure(){
+  const c=$('thumb-delaytest'),x=c.getContext('2d');
+  c.width=320;c.height=180;
+  x.fillStyle='#000';x.fillRect(0,0,320,180);
+  x.fillStyle='#fff';x.fillRect(160,0,160,180);
+  x.font='700 22px IBM Plex Mono, monospace';x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle='#fff';x.fillText('FLASH',80,82);
+  x.fillStyle='#000';x.fillText('+ BIP',240,82);
+  x.font='700 14px IBM Plex Mono, monospace';
+  x.fillStyle='rgba(255,255,255,0.4)';x.fillText('⚡',80,118);
+  x.fillStyle='rgba(0,0,0,0.4)';x.fillText('⚡',240,118);
+  x.font='500 10px IBM Plex Mono, monospace';
+  x.fillStyle='rgba(255,255,255,0.5)';x.fillText('1000 / 500 Hz',80,148);
+  x.fillStyle='rgba(0,0,0,0.5)';x.fillText('pour l\'Analyseur',240,148);
+}
+
+// ========== PLEIN ÉCRAN ==========
+function goFullscreenLandscape(){
+  // Chrome Android refuse de verrouiller l'orientation hors plein écran : plein écran d'abord, verrou ensuite
+  const lock=()=>{try{screen.orientation?.lock?.('landscape').catch(()=>{});}catch(e){}};
+  try{
+    const el=document.documentElement,rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq){const p=rq.call(el);if(p&&p.then)p.then(lock,()=>{});else lock();}else lock();
+  }catch(e){lock();}
+}
+function leaveFullscreen(){
+  try{if(document.fullscreenElement||document.webkitFullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen)?.call(document)?.catch(()=>{});}catch(e){}
+  try{screen.orientation?.unlock?.();}catch(e){}
+}
 
 // ========== COUNTDOWN ==========
 function startCountdown(){
   showScreen('countdown');ensureAudio();activateMediaSession();
-  try{screen.orientation?.lock?.('landscape').catch(()=>{});}catch(e){}
-  try{const el=document.documentElement;(el.requestFullscreen||el.webkitRequestFullscreen)?.call(el)?.catch(()=>{});}catch(e){}
-  const numEl=document.getElementById('countdown-number'),labelEl=document.getElementById('countdown-label');
-  let count=3;
+  $('countdown-hint').hidden=wakeLockUseful();
+  goFullscreenLandscape();
+  const numEl=$('countdown-number'),labelEl=$('countdown-label');
+  const tok=++cdToken;let count=3;
   function tick(){
+    if(tok!==cdToken)return;
     numEl.textContent=count;numEl.style.opacity='0';numEl.style.transform='scale(1.3)';numEl.style.transition='none';
     void numEl.offsetWidth;numEl.style.transition='opacity 0.25s ease-out, transform 0.25s ease-out';
     numEl.style.opacity='1';numEl.style.transform='scale(1)';beepNow(660,0.06);haptic();
     labelEl.textContent=count===3?'Préparation…':count===2?'Attention…':'C\'est parti !';
-    count--;if(count>=0)setTimeout(tick,1000);else setTimeout(startPlayer,400);
+    count--;
+    setTimeout(count>=1?tick:()=>{if(tok===cdToken)startPlayer();},1000);
   }
   tick();
 }
+function cancelCountdown(silent){
+  const wasCounting=$('countdown').classList.contains('active');
+  cdToken++;
+  if(wasCounting&&!silent){leaveFullscreen();showScreen('home');}
+}
+
+// ========== SIGNAL DE MESURE : calendrier des flashs/bips ==========
+// Cadence volontairement irrégulière (0,80 à 1,40 s entre deux événements) :
+//  1. un flash pile chaque seconde tombe toujours au même endroit entre deux images de la
+//     caméra (30 i/s = 30 images exactement par seconde) : l'erreur d'échantillonnage serait
+//     figée pendant toute une session. Ici elle change à chaque passe et s'annule en moyenne.
+//  2. l'Analyseur peut apparier flashs et bips sans ambiguïté, même au-delà d'une seconde de décalage.
+// L'alternance bip aigu (pair) / grave (impair) est conservée.
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function mesBuildIntervals(){
+  const rng=mulberry32(MES_SEED),iv=[];
+  while(iv.length<MES_PERIOD){
+    const p=[];for(let i=0;i<MES_BASES;i++)p.push(i);
+    for(let i=MES_BASES-1;i>0;i--){const j=Math.floor(rng()*(i+1));const t=p[i];p[i]=p[j];p[j]=t;} // rangs mélangés
+    for(const b of p)iv.push(MES_INT_MIN+MES_INT_STEP*(b+rng()));
+  }
+  return iv.slice(0,MES_PERIOD);
+}
+const mes={iv:null,times:[],sched:0,cur:-1};
+function mesInit(t0){if(!mes.iv)mes.iv=mesBuildIntervals();mes.times=[t0];mes.sched=0;mes.cur=-1;}
+function mesExtend(until){
+  let n=mes.times.length,last=mes.times[n-1];
+  while(last<until){last+=mes.iv[(n-1)%MES_PERIOD];mes.times.push(last);n++;}
+}
+// Pré-programme les bips sur l'horloge audio, jusqu'à SCHEDULE_AHEAD secondes à l'avance
+function mesSchedule(){
+  const now=audioCtx.currentTime,horizon=now+SCHEDULE_AHEAD;
+  mesExtend(horizon);
+  while(mes.sched<mes.times.length&&mes.times[mes.sched]<=horizon){
+    const k=mes.sched,t=mes.times[k];
+    if(t>now-0.01)scheduleTone(t,isEven(k)?FREQ_EVEN_COUNTER:FREQ_ODD_COUNTER);
+    mes.sched++;
+  }
+}
+// Rendu : blanc plein écran pendant MES_FLASH_DUR à partir de l'instant du bip.
+// Le flash est attribué à l'image d'écran la plus proche de l'instant du bip (d'où le demi-rafraîchissement).
+function renderMesure(ctx,W,H,tHeard){
+  const half=refreshMs/2000;
+  while(mes.cur+1<mes.times.length&&tHeard>=mes.times[mes.cur+1]-half)mes.cur++;
+  const k=mes.cur;
+  const on=k>=0&&tHeard<mes.times[k]+MES_FLASH_DUR;
+  ctx.fillStyle=on?'#ffffff':'#000000';ctx.fillRect(0,0,W,H);
+  if(on)return; // rien d'autre pendant le flash : contraste maximal
+  const ts=Math.max(12,Math.min(W*0.024,H*0.035)),ts2=Math.max(11,ts*0.75);
+  const n=Math.max(0,k);
+  ctx.font=`600 ${ts}px IBM Plex Mono, monospace`;ctx.fillStyle=colDim(n,'0.55');
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const lab=k<0?'PRÊT':(isEven(n)?`BIP ${String(n).padStart(3,'0')}  ·  PAIR · ${FREQ_EVEN_COUNTER} Hz`:`BIP ${String(n).padStart(3,'0')}  ·  IMPAIR · ${FREQ_ODD_COUNTER} Hz`);
+  ctx.fillText(lab,W/2,H-ts*2.2);
+  ctx.font=`500 ${ts2}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.20)';
+  ctx.fillText('Volume au maximum  ·  touche pour quitter',W/2,H-ts*0.7);
+  ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,0.10)';ctx.fillText('SIGNAL DE MESURE ⚡',14,22);
+  ctx.textAlign='right';ctx.fillText(`Flash ${Math.round(MES_FLASH_DUR*1000)} ms`,W-14,22);
+}
 
 // ========== PLAYER (générateur) ==========
-// SYNC AUDIT V8.1 — Horloge unique : audioCtx.currentTime
-// Le rendu visuel ET le scheduling audio sont basés sur la même horloge matérielle audio.
-// → Élimine tout drift potentiel entre performance.now() (système) et audioCtx (audio).
-// → Garantit que le flash visuel à la frame de la seconde N coïncide exactement avec le bip programmé à audioT0+N.
-function startPlayer(){
-  showScreen('player');ensureAudio();activateMediaSession();createMasterGain();
-  const cv=document.getElementById('player-canvas'),ctx=cv.getContext('2d');
-  document.getElementById('hud-info').textContent=`${names[pattern]}  ·  ${fps}${scan}`;
-  document.getElementById('hud-legend').style.display='flex';
-  document.getElementById('offset-controls').style.display='none';
-  playing=true;audioT0=audioCtx.currentTime;perfT0=performance.now();scheduledUpTo=-1;
-  scheduleBeepsBatch(0,SCHEDULE_AHEAD);
-  let lastHapticSec=-1;setupHud(cv);
+// Le son a été suspendu par le système (appel, verrouillage, arrière-plan) : on le dit, un toucher le relance.
+function drawPaused(ctx,W,H){
+  ctx.fillStyle='#000000';ctx.fillRect(0,0,W,H);
+  const fs=Math.max(26,Math.min(W*0.075,H*0.12)); // lisible à distance : l'appareil est posé devant la caméra
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`700 ${fs}px IBM Plex Mono, monospace`;ctx.fillStyle='#f97316';
+  ctx.fillText('Son en pause',W/2,H/2-fs*0.8);
+  ctx.font=`500 ${fs*0.7}px IBM Plex Mono, monospace`;ctx.fillStyle='rgba(255,255,255,0.8)';
+  ctx.fillText('Touche l\'écran pour relancer le signal',W/2,H/2+fs*0.6);
+}
+function installResize(cv,ctx){
   const dpr=window.devicePixelRatio||1;
-  function resize(){cv.width=window.innerWidth*dpr;cv.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
-  resize();window.addEventListener('resize',resize);
-  const fd=1000/fps;
-  function render(){
+  if(playerResize)window.removeEventListener('resize',playerResize);
+  playerResize=function(){cv.width=window.innerWidth*dpr;cv.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);};
+  playerResize();window.addEventListener('resize',playerResize);
+}
+// Horloge unique : l'horloge audio. Les bips sont programmés à audioT0 + … ;
+// l'image suit heardTimeAtDisplay() (même horloge, corrigée des latences connues).
+function startPlayer(){
+  showScreen('player');ensureAudio();activateMediaSession();createMasterGain();keepAwake(true);
+  const cv=$('player-canvas'),ctx=cv.getContext('2d');
+  const isMes=pattern==='delaytest';
+  $('hud-info').textContent=(isMes?'Signal de mesure · volume au maximum':`${names[pattern]}  ·  ${fps}${scan}`)+
+    (refreshMs>25?' · affichage à 30 images/s (économie d\'énergie ?) : précision réduite':'')+
+    (wakeLockUseful()?'':' · coupe le verrouillage automatique de l\'écran');
+  outLat=readOutLatency();outLatBuf=[];
+  $('hud-legend').style.display=isMes?'none':'flex';
+  $('offset-controls').style.display='none';
+  playing=true;audioT0=audioCtx.currentTime+START_LEAD;scheduledUpTo=-1;
+  if(isMes){mesInit(audioT0);mesSchedule();}else scheduleBeepsBatch(0,SCHEDULE_AHEAD);
+  let lastHapticSec=-1;setupHud(cv);
+  installResize(cv,ctx);
+  const fd=isMes?0:1000/fps;
+  function render(ts){
     if(!playing)return;
-    // V8.1 : horloge audio matérielle = référence unique pour visuel + audio
-    const elapsedSec = audioCtx.currentTime - audioT0;
-    const elapsed = elapsedSec * 1000; // ms
-    const totalF = Math.floor(elapsed/fd);
-    const sec = Math.floor(elapsedSec);
-    const frac = elapsedSec - sec; // 0..1 dans la seconde courante
     const W=window.innerWidth,H=window.innerHeight;
-    maintainSchedule(elapsedSec);
-    if(sec!==lastHapticSec){lastHapticSec=sec;haptic();}
+    if(audioPaused()){drawPaused(ctx,W,H);animId=requestAnimationFrame(render);return;}
+    const tHeard=heardTimeAtDisplay(ts||performance.now());
     ctx.clearRect(0,0,W,H);
-    switch(pattern){
-      case'counter':renderCounter(ctx,W,H,totalF,sec,frac);break;
-      case'bounce':renderBounce(ctx,W,H,totalF,sec,frac);break;
-      case'delaytest':renderDelayTest(ctx,W,H,totalF,sec,frac);break;
+    if(isMes){
+      mesSchedule();
+      renderMesure(ctx,W,H,tHeard);
+    }else{
+      maintainSchedule(audioCtx.currentTime-audioT0);
+      let elapsedSec=tHeard-audioT0,sec,frac;
+      if(elapsedSec<0){elapsedSec=0;sec=0;frac=0.999;} // avant le premier bip : image d'attente, sans flash
+      else{sec=Math.floor(elapsedSec);frac=elapsedSec-sec;}
+      const totalF=Math.floor(elapsedSec*1000/fd);
+      if(sec!==lastHapticSec){lastHapticSec=sec;haptic();}
+      if(pattern==='counter')renderCounter(ctx,W,H,totalF,sec,frac);
+      else renderBounce(ctx,W,H,totalF,sec,frac);
     }
     animId=requestAnimationFrame(render);
   }
@@ -947,24 +1525,25 @@ function startPlayer(){
 // NTP Player
 function startNtpPlayer(){
   showScreen('player');
-  ensureAudio(); activateMediaSession(); createMasterGain();
-  try{screen.orientation?.lock?.('landscape').catch(()=>{});}catch(e){}
-  try{const el=document.documentElement;(el.requestFullscreen||el.webkitRequestFullscreen)?.call(el)?.catch(()=>{});}catch(e){}
-  const cv=document.getElementById('player-canvas'),ctx=cv.getContext('2d');
-  document.getElementById('hud-info').textContent=`Timecode NTP  ·  ${fps}${scan}`;
-  document.getElementById('hud-legend').style.display='none';
-  document.getElementById('offset-controls').style.display='flex';
+  ensureAudio(); activateMediaSession(); createMasterGain(); keepAwake(true);
+  goFullscreenLandscape();
+  const cv=$('player-canvas'),ctx=cv.getContext('2d');
+  $('hud-info').textContent=`Timecode NTP  ·  ${fps}${scan}`+(wakeLockUseful()?'':' · coupe le verrouillage automatique de l\'écran');
+  $('hud-legend').style.display='none';
+  $('offset-controls').style.display='flex';
   updateOffsetLabel();
   playing=true;
   initNtpBeeps();
   let lastHapticSec=-1;setupHud(cv);
-  const dpr=window.devicePixelRatio||1;
-  function resize(){cv.width=window.innerWidth*dpr;cv.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
-  resize();window.addEventListener('resize',resize);
+  installResize(cv,ctx);
+  let wasPaused=false;
   function render(){
     if(!playing)return;
     const now=new Date();
     const W=window.innerWidth,H=window.innerHeight;
+    if(audioPaused()){wasPaused=true;drawPaused(ctx,W,H);animId=requestAnimationFrame(render);return;}
+    // après une pause du son, la correspondance heure murale → horloge audio est à refaire
+    if(wasPaused){wasPaused=false;createMasterGain();initNtpBeeps();}
     maintainNtpBeeps();
     const curSec=now.getSeconds();
     if(curSec!==lastHapticSec){lastHapticSec=curSec;haptic();}
@@ -976,29 +1555,25 @@ function startNtpPlayer(){
 }
 
 function setupHud(cv){
-  const hud=document.getElementById('hud');
+  const hud=$('hud');
   function showHud(){hud.classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>hud.classList.remove('visible'),3500);}
   showHud();cv.onclick=showHud;
 }
 
 function stopPlayer(){
   playing=false;if(animId)cancelAnimationFrame(animId);
+  if(playerResize){window.removeEventListener('resize',playerResize);playerResize=null;}
   killAudio();deactivateMediaSession();scheduledUpTo=-1;ntpScheduledUpToSec=-1;
-  document.getElementById('offset-controls').style.display='none';
-  try{(document.exitFullscreen||document.webkitExitFullscreen)?.call(document)?.catch(()=>{});}catch(e){}
-  try{screen.orientation?.unlock?.();}catch(e){}
+  keepAwake(false);
+  $('offset-controls').style.display='none';
+  leaveFullscreen();
   showScreen('home');
 }
 
 // ========== RENDU NTP ==========
-// SYNC AUDIT V8.1
-//   Cas particulier : Le timecode NTP doit refléter la wall clock (Date.now()),
-//   donc le rendu visuel utilise new Date() (pas audioCtx.currentTime).
-//   Mapping wall→audio fait UNE FOIS à l'init (ntpWallT0, ntpAudioT0).
-//   Limitation connue : drift très lent (~ms par minute) entre Date.now() et audioCtx
-//   peut décaler le bip par rapport au timecode affiché. En usage broadcast court
-//   (< 30 min), drift cumulé < 10 ms. Acceptable. Si besoin, refresh mapping
-//   à implémenter en V8.2.
+// Le timecode NTP reflète l'horloge murale (Date.now()), pas l'horloge audio.
+// Correspondance mur → audio faite une fois au démarrage (ntpWallT0, ntpAudioT0).
+// Limite connue : dérive lente possible entre les deux horloges sur un usage long.
 function renderNtp(ctx,W,H,now){
   ctx.fillStyle='#000000';ctx.fillRect(0,0,W,H);
   const{tc,h,m,s,frame,ms}=ntpTimecode(now,fps,ntpOffsetMs);
@@ -1084,11 +1659,8 @@ function renderNtp(ctx,W,H,now){
 }
 
 // ========== RENDU COUNTER ==========
-// SYNC AUDIT V8.1
-//   Bip programmé : audioT0 + s        (seconde s exacte, horloge audio matérielle)
-//   Flash visuel  : actif si frac<0.07 (~70 ms autour de la seconde, fenêtre humaine)
-//   Référence visuelle : audioCtx.currentTime (même horloge que le bip)
-//   → Co-localisation garantie : flash et bip alignés à la précision audio (~0.02 ms)
+//   Bip programmé : audioT0 + s (seconde exacte, horloge audio matérielle)
+//   Flash visuel  : actif si frac < 0.07 (~70 ms)
 function renderCounter(ctx,W,H,totalF,sec,frac){
   const flash=frac<0.07;const even=isEven(sec);const col=colFor(sec);
   ctx.fillStyle=flash?(even?'#1a2e5a':'#3d200a'):'#09090b';ctx.fillRect(0,0,W,H);
@@ -1109,12 +1681,7 @@ function renderCounter(ctx,W,H,totalF,sec,frac){
 }
 
 // ========== RENDU BOUNCING BALL ==========
-// SYNC AUDIT V8.1
-//   Bip programmé    : audioT0 + s              (impact = seconde s exacte)
-//   Position balle   : ballY = groundY quand frac=0 → IMPACT = seconde exacte
-//   Animation impact : isImpact si frac<0.055   (ripple visuel ~55 ms)
-//   Référence visuelle : audioCtx.currentTime
-//   → La balle touche le sol au moment précis où le bip est joué
+//   Bip programmé  : audioT0 + s — la balle touche le sol à frac = 0
 function renderBounce(ctx,W,H,totalF,sec,frac){
   const even=isEven(sec);const col=colFor(sec);ctx.fillStyle='#09090b';ctx.fillRect(0,0,W,H);
   const cx=W/2,groundY=H*0.70,ballR=Math.min(W,H)*0.05,peakY=H*0.10+ballR;
@@ -1152,760 +1719,1194 @@ function renderBounce(ctx,W,H,totalF,sec,frac){
   ctx.fillStyle=active?colDim(sec,'0.7'):'rgba(255,255,255,0.06)';ctx.fill();}
 }
 
-// ========== RENDU DELAY TEST ⚡ ==========
-// Pattern dédié au mode Analyseur :
-// - Fond noir 100% du temps hors flash
-// - Flash blanc PLEIN ÉCRAN pendant 2 frames à chaque seconde (max contraste pour détection caméra browser)
-// - Bip 1000 Hz pair / 500 Hz impair, durée 30 ms, parfaitement co-localisé avec le flash
-// - Légère HUD discrète en bas (n'interfère pas avec détection ROI centrale)
-// SYNC AUDIT V8.1
-//   Bip programmé : audioT0 + s   (seconde s exacte, durée 30 ms)
-//   Flash visuel  : actif si (frac*1000) < (2 × (1000/fps))  →  démarre à frac=0 = seconde exacte
-//   Référence visuelle : audioCtx.currentTime
-//   → Bip et flash démarrent à la même horloge audio. Aucun drift possible.
-function renderDelayTest(ctx,W,H,totalF,sec,frac){
-  const fd = 1000/fps; // ms par frame
-  const flashDurMs = 2 * fd; // 2 frames
-  const flashActive = (frac * 1000) < flashDurMs;
-  const even = isEven(sec);
+// ========================================================================
+// ========== ANALYSEUR — mesure du décalage son / image ==========
+// ========================================================================
+// Principe
+//  1. IMAGE : chaque image de la caméra est horodatée (requestVideoFrameCallback quand il existe),
+//     réduite en 160×90, et sa luminance moyenne suivie par FlashDetector, qui date le début du
+//     flash au sein de l'image par la méthode de l'aire (une image à moitié éclairée = flash
+//     commencé à mi-pose).
+//  2. SON : BipDetector tourne dans un AudioWorklet (au sample près), filtre 350-3500 Hz, date
+//     l'attaque du bip à mi-hauteur de son plateau (indépendant du volume) et vérifie qu'il
+//     s'agit bien d'un son tonal 500 ou 1000 Hz (rejet des voix, claquements…).
+//  3. APPARIEMENT : findLock cherche le décalage commun au plus grand nombre de couples
+//     flash/bip. Avec la cadence irrégulière du signal de mesure, un seul décalage convient.
+//  4. RÉSULTAT : médiane des couples retenus, moins l'étalonnage s'il existe.
 
-  // Fond plein écran : blanc pur si flash, sinon noir pur
-  ctx.fillStyle = flashActive ? '#ffffff' : '#000000';
-  ctx.fillRect(0, 0, W, H);
+const CAP_W=160, CAP_H=90;       // image réduite pour la luminance (décision n° 9)
+const ANA_WARMUP_MS = 1500;      // événements ignorés au démarrage (exposition auto, décision n° 34)
+const LAG_MAX_MS = 2500;         // décalage maximal recherché (±)
+const CLUSTER_WIN_MS = 60;       // largeur de la fenêtre de regroupement
+const PAIR_TOL_MS = 30;          // écart maximal d'un couple au décalage retenu (= demi-fenêtre de regroupement)
+const STAT_TOL_MS = 60;          // tolérance élargie pour CALCULER la valeur une fois le signal reconnu
+const MIN_LOCK = 6;              // couples concordants nécessaires pour « accrocher »
+const EVENT_KEEP_MS = 60000;
+const SYNC_TOL_MS = 10;          // en dessous (ou sous l'incertitude de la mesure) : « synchro, rien à régler »
+const COVER_F_MIN = 0.6;         // un décalage n'est retenu que s'il apparie au moins 60 % des flashs de la période…
+const COVER_B_MIN = 0.4;         // …et 40 % des bips (deux sons par flash = 50 %)
+const CALIB_MIN_PASSES = 20;     // un étalonnage sert à toutes les mesures suivantes : on y met plus de flashs
+const CALIB_MAX_SE = 5;          // incertitude maximale (erreur type, ms) d'un étalonnage accepté
+const CALIB_MAX_ABS = 400;
+const SERIES_GAP_MS = 30*60*1000;
 
-  // HUD discret en bas — n'apparaît PAS pendant le flash (sinon brouille la détection)
-  if (!flashActive) {
-    const ts = Math.min(W*0.024, H*0.035);
-    const ts2 = ts * 0.75;
-
-    // Compteur SEC + parité
-    ctx.font = `600 ${ts}px IBM Plex Mono, monospace`;
-    ctx.fillStyle = colDim(sec, '0.55');
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const label = even ? `SEC ${String(sec).padStart(2,'0')}  ·  PAIR · ${FREQ_EVEN_COUNTER} Hz`
-                       : `SEC ${String(sec).padStart(2,'0')}  ·  IMPAIR · ${FREQ_ODD_COUNTER} Hz`;
-    ctx.fillText(label, W/2, H - ts*2.2);
-
-    // TC SMPTE
-    ctx.font = `500 ${ts2}px IBM Plex Mono, monospace`;
-    ctx.fillStyle = 'rgba(255,255,255,0.20)';
-    ctx.fillText(`${smpte(totalF,fps)}  ·  ${fps}${scan}`, W/2, H - ts*0.7);
-
-    // Coin haut gauche : label pattern
-    ctx.font = `500 ${ts2}px IBM Plex Mono, monospace`;
-    ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.10)';
-    ctx.fillText('DELAY TEST ⚡', 14, 22);
-
-    // Coin haut droit : info
-    ctx.textAlign = 'right';
-    ctx.fillText(`Flash ${flashDurMs.toFixed(0)} ms`, W - 14, 22);
+// ---------- Détecteur de bip (exécuté dans l'AudioWorklet : ne dépend de rien d'extérieur) ----------
+class BipDetector{
+  constructor(sr){
+    this.sr=sr;
+    const bq=(type,f,q)=>{
+      const w=2*Math.PI*f/sr,c=Math.cos(w),al=Math.sin(w)/(2*q),a0=1+al;
+      let b0,b1,b2;
+      if(type==='hp'){b0=(1+c)/2;b1=-(1+c);b2=(1+c)/2;}else{b0=(1-c)/2;b1=1-c;b2=(1-c)/2;}
+      return{b0:b0/a0,b1:b1/a0,b2:b2/a0,a1:-2*c/a0,a2:(1-al)/a0,x1:0,x2:0,y1:0,y2:0};
+    };
+    this.hp=bq('hp',350,0.707);this.lp=bq('lp',3500,0.707);   // passe-bande 350–3500 Hz
+    this.W=Math.max(8,Math.round(sr*0.002));                    // fenêtre d'énergie : 2 ms
+    this.win=new Float32Array(this.W);this.wi=0;this.ws=0;
+    this.hop=Math.max(2,Math.round(sr*0.00025));this.hc=0;      // une valeur d'enveloppe toutes les 0,25 ms
+    this.H=4096;this.env=new Float32Array(this.H);this.ef=new Float64Array(this.H);this.total=0;
+    this.nf=0;this.boot=0;                                      // plancher de bruit
+    this.st=0;this.trigN=0;this.peak=0;this.peakN=0;this.nf0=0;this.until=0;
+    this.ABS=0.001;                                             // seuil plancher absolu (≈ −60 dBFS)
+    this.K=5;                                                   // déclenchement à 5 × le bruit (≈ +14 dB)
+    this.peakHops=Math.round(0.03*sr/this.hop);                 // recherche du plateau : 30 ms
+    this.backHops=Math.round(0.012*sr/this.hop);                // retour arrière : 12 ms
+    this.refrOk=Math.round(0.25*sr/this.hop);                   // silence imposé après un bip : 250 ms
+    this.refrKo=Math.round(0.06*sr/this.hop);                   // après un son rejeté : 60 ms
+    // Analyse tonale (Goertzel) : 500, 1500, 2500 Hz = bip grave ; 1000, 3000 Hz = bip aigu
+    this.gf=[500,1500,2500,1000,3000];
+    this.gc=this.gf.map(f=>2*Math.cos(2*Math.PI*f/sr));
+    this.g1=new Float64Array(5);this.g2=new Float64Array(5);this.gn=0;this.ge=0;this.gOn=false;
+    this.lvlN=Math.round(sr*0.04);this.lvlC=0;this.lvlMax=0;    // niveau pour l'affichage : toutes les 40 ms
+    this.dip=false;this.re=0;this.sec=true;                     // guet d'un second son juste après un bip
+  }
+  // x : bloc d'échantillons ; frame0 : numéro (horloge du contexte audio) du premier échantillon
+  feed(x,frame0){
+    let out=null;const n=x.length,hp=this.hp,lp=this.lp,W=this.W;
+    for(let i=0;i<n;i++){
+      let s=x[i];if(s!==s)s=0;
+      const y=hp.b0*s+hp.b1*hp.x1+hp.b2*hp.x2-hp.a1*hp.y1-hp.a2*hp.y2;hp.x2=hp.x1;hp.x1=s;hp.y2=hp.y1;hp.y1=y;
+      const z=lp.b0*y+lp.b1*lp.x1+lp.b2*lp.x2-lp.a1*lp.y1-lp.a2*lp.y2;lp.x2=lp.x1;lp.x1=y;lp.y2=lp.y1;lp.y1=z;
+      if(this.gOn){ // tonalité jugée sur le signal filtré : une ronflette 50/100 Hz ne masque plus le bip
+        const g1=this.g1,g2=this.g2,gc=this.gc;
+        for(let k=0;k<5;k++){const v=z+gc[k]*g1[k]-g2[k];g2[k]=g1[k];g1[k]=v;}
+        this.ge+=z*z;this.gn++;
+      }
+      const p=Math.fround(z*z);
+      this.ws+=p-this.win[this.wi];this.win[this.wi]=p;
+      if(++this.wi>=W){this.wi=0;let t=0;const w=this.win;for(let k=0;k<W;k++)t+=w[k];this.ws=t;} // recalage exact périodique
+      if(++this.hc>=this.hop){
+        this.hc=0;
+        const e=Math.sqrt(Math.max(0,this.ws)/W);
+        if(e>this.lvlMax)this.lvlMax=e;
+        const m=this.step(e,frame0+i);
+        if(m)(out||(out=[])).push(m);
+      }
+      if(++this.lvlC>=this.lvlN){
+        this.lvlC=0;
+        (out||(out=[])).push({k:'lvl',e:this.lvlMax,nf:this.nf,thr:Math.max(this.ABS,this.nf*this.K)});
+        this.lvlMax=0;
+      }
+    }
+    return out;
+  }
+  // e : enveloppe (valeur efficace sur 2 ms) ; f : numéro du dernier échantillon de la fenêtre
+  step(e,f){
+    const H=this.H,c=++this.total;
+    this.env[(c-1)%H]=e;this.ef[(c-1)%H]=f;
+    if(this.boot<400){this.boot++;this.nf+=(e-this.nf)/this.boot;return null;} // amorçage : 100 ms
+    const thr=Math.max(this.ABS,this.nf*this.K);
+    if(this.st===0){
+      if(e>thr){
+        this.st=1;this.trigN=c;this.peak=e;this.peakN=c;this.nf0=this.nf;
+        this.g1.fill(0);this.g2.fill(0);this.gn=0;this.ge=0;this.gOn=true;
+        return null;
+      }
+      // suivi du bruit : descend vite, monte lentement
+      this.nf+=(e-this.nf)*(e<this.nf?0.01:(e<this.nf*3?0.0008:0.00005));
+      return null;
+    }
+    if(this.st===1){
+      if(e>this.peak){this.peak=e;this.peakN=c;}
+      if(c-this.trigN<this.peakHops)return null;
+      // --- fin de la fenêtre de 30 ms : on date l'attaque et on qualifie le son ---
+      this.gOn=false;
+      const lvl=this.nf0+0.5*(this.peak-this.nf0);           // mi-hauteur entre bruit et plateau
+      const c0=Math.max(this.trigN-this.backHops,c-H+2,2);
+      let cross=this.peakN;
+      for(let q=c0;q<=this.peakN;q++){if(this.env[(q-1)%H]>=lvl){cross=q;break;}}
+      const e1=this.env[(cross-1)%H],e0=this.env[(cross-2)%H],f1=this.ef[(cross-1)%H];
+      let fr=1;if(cross>c0&&e1>e0)fr=Math.min(1,Math.max(0,(lvl-e0)/(e1-e0)));
+      // La fenêtre de 2 ms atteint la mi-hauteur quand elle est remplie au quart : on retire ce quart.
+      const onset=f1-(1-fr)*this.hop-this.W*0.25;
+      // tonalité : part de l'énergie portée par les composantes attendues (1 = sinus pur)
+      let odd=0,even=0;
+      if(this.gn>0&&this.ge>0){
+        const norm=(this.gn/2)*this.ge;
+        for(let k=0;k<5;k++){
+          const pw=(this.g1[k]*this.g1[k]+this.g2[k]*this.g2[k]-this.gc[k]*this.g1[k]*this.g2[k])/norm;
+          if(k<3)odd+=pw;else even+=pw;
+        }
+      }
+      const ton=odd+even,ok=ton>=0.08;
+      this.st=2;this.until=this.trigN+(ok?this.refrOk:this.refrKo);
+      this.dip=false;this.re=0;this.sec=!ok;
+      if(!ok)return{k:'noise',ton:ton};
+      const par=even>odd*1.5?'even':(odd>even*1.5?'odd':'unknown');
+      return{k:'bip',f:onset,peak:this.peak,nf:this.nf0,par:par,ton:ton};
+    }
+    // st===2 : période réfractaire, puis attente du retour au calme
+    // Pendant ce temps on guette un SECOND son : l'enveloppe qui double, ou qui remonte après être retombée.
+    // C'est le signe que le micro entend deux fois le bip (Générateur en direct + sortie de la chaîne) à moins
+    // de 250 ms d'écart : le premier seul est daté, il faut donc le signaler.
+    if(!this.sec){
+      if(e>2*this.peak||(this.dip&&e>0.5*this.peak)){
+        if(++this.re>=40){this.sec=true;return{k:'second',dt:(c-this.trigN)*this.hop/this.sr*1000};}
+      }else{this.re=0;if(e<0.25*this.peak)this.dip=true;}
+    }
+    if(e>this.nf*3)this.nf+=(e-this.nf)*0.00005;
+    if(c>=this.until&&e<thr*0.7)this.st=0;
+    return null;
   }
 }
 
-// ========================================================================
-// ========== ANALYSEUR — Mesure de délai A/V ==========
-// ========================================================================
-
-// État
-let analyzerState = 'idle'; // idle | setup | running | finished | error
-let videoStream = null, audioStream = null;
-let videoEl = null, captureCanvas = null, captureCtx = null;
-let analyserNode = null, micSourceNode = null, micGainNode = null, audioRawBuf = null;
-let analyzerFps = 25;
-let analyzerPassesTarget = 5;
-let analyzerRafId = null;
-
-// Détection
-let lumBaseline = 30;      // moyenne glissante luminance (0-255)
-let rmsBaseline = 0.005;   // moyenne glissante RMS audio
-let lastFlashAt = -Infinity;
-let lastBipAt = -Infinity;
-// V8.1.2 — Interpolation sub-frame
-let prevLum = 0, prevLumT = 0;
-let prevRms = 0, prevRmsT = 0;
-// V8.1 — Fenêtres élargies pour marge de sécurité (delays > 500 ms gérés)
-const COOLDOWN_MS = 700;           // entre 2 détections du même type
-const MATCH_WINDOW_MS = 900;       // fenêtre d'appariement flash↔bip (couvre ±900 ms)
-const FLASH_MATCH_DELAY_MS = 1000; // on attend ce délai pour matcher (collecte bips environnants)
-const STATE_WARMUP_MS = 1500;      // V8.1.3 — étendu pour stabilisation auto-exposure caméra + AGC micro
-// V8.1.1 — Boost sensibilité micro
-const MIC_GAIN = 4.0;              // gain GainNode (≈ +12 dB)
-const RMS_THRESHOLD_ABS = 0.02;    // seuil RMS absolu (était 0.04)
-const RMS_THRESHOLD_FACTOR = 3.5;  // multiplicateur baseline (était 5)
-const LUM_THRESHOLD_ABS = 110;     // seuil luminance absolu (était 120)
-const LUM_THRESHOLD_DELTA = 40;    // delta vs baseline (était 50)
-// Détection fréquence bip (sanity check pair/impair)
-let audioFreqBuf = null;           // Uint8Array pour getByteFrequencyData
-
-let pendingFlashes = [];   // [{t, matched}]
-let bipBuffer = [];        // [{t, parity}]  parity: 'even' | 'odd' | 'unknown'
-let measurements = [];     // [{deltaMs, bipParity}]
-let analyzerStartedAt = 0;
-
-// VU display
-let vuVideoSmooth = 0, vuAudioSmooth = 0;
-
-// V8.1.1/V8.1.3 — Mode debug
-let debugMode = false;
-let debugStats = {
-  lum: 0, lumThr: 0, rms: 0, rmsThr: 0,
-  flashes: 0, bips: 0, lastDelta: null,
-  // V8.1.3
-  camFps: 0, audioSr: 0
-};
-
-function toggleDebug(){
-  debugMode = !debugMode;
-  document.getElementById('az-debug-toggle').classList.toggle('active', debugMode);
+// ---------- Détecteur de flash ----------
+// Table sRGB → lumière linéaire (0-255). Une image éclairée à 50 % en lumière se lit ~73 % en octets :
+// sans cette conversion, la méthode de l'aire daterait le flash 6 à 7 ms trop tôt.
+const LIN=new Float32Array(256);
+for(let i=0;i<256;i++){const c=i/255;LIN[i]=255*(c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4));}
+class FlashDetector{
+  constructor(){
+    this.N=128;this.T=new Float64Array(this.N);this.L=new Float32Array(this.N);this.Q=new Float32Array(this.N);this.k=0;
+    this.dark=[];this.darkQ=[];this.lo=null;this.loQ=0;this.nz=0.5;this.nzQ=0.5;this.C=null;this.iv=0;
+    this.st=0;this.k0=0;this.peak=0;this.peakQ=0;this.lastOn=-1e12;this.fallT=0;
+  }
+  thr(){return this.lo+Math.max(4,6*this.nz,this.C?0.25*this.C:0);}
+  addDark(l,q){
+    this.dark.push(l);this.darkQ.push(q);
+    if(this.dark.length>24){this.dark.shift();this.darkQ.shift();}
+  }
+  updateDark(){
+    const m=medianOf(this.dark);this.lo=m;
+    this.nz=Math.max(0.15,1.4826*medianOf(this.dark.map(v=>Math.abs(v-m))));
+    const mq=medianOf(this.darkQ);this.loQ=mq;
+    this.nzQ=Math.max(0.05,1.4826*medianOf(this.darkQ.map(v=>Math.abs(v-mq))));
+  }
+  relearn(){this.dark=[];this.darkQ=[];this.lo=null;this.C=null;this.st=0;}
+  // t : horodatage de l'image (ms) ; l : luminance moyenne 0-255 (octets, sert aux seuils) ;
+  // q : la même en lumière linéaire (sert à dater). Renvoie {t,c,part,T} à la fin d'un flash, sinon null.
+  push(t,l,q){
+    if(q===undefined)q=l;
+    const N=this.N,k=this.k++;this.T[k%N]=t;this.L[k%N]=l;this.Q[k%N]=q;
+    if(k>0){const dt=t-this.T[(k-1)%N];if(dt>4&&dt<120)this.iv=this.iv?this.iv+(dt-this.iv)*0.1:dt;}
+    if(this.lo===null){this.addDark(l,q);if(this.dark.length>=8)this.updateDark();return null;} // amorçage
+    if(this.st===0){
+      if(this.C!==null&&t-this.lastOn>3000)this.C=null;       // contraste oublié si plus de flash (recadrage)
+      if(l>this.thr()&&t-this.lastOn>250){this.st=1;this.k0=k;this.peak=l;this.peakQ=q;return null;}
+      this.addDark(l,q);this.updateDark();
+      return null;
+    }
+    if(this.st===1){
+      if(l>this.peak)this.peak=l;
+      if(q>this.peakQ)this.peakQ=q;
+      if(t-this.T[this.k0%N]>600){this.relearn();return null;} // pas un flash : l'éclairage a changé
+      if(l<this.lo+0.4*(this.peak-this.lo)){
+        const ev=this.onset(k-1);this.st=2;this.fallT=t;return ev;
+      }
+      return null;
+    }
+    // st===2 : attendre le retour au noir
+    if(l<=this.thr()){this.st=0;this.addDark(l,q);this.updateDark();}
+    else if(t-this.fallT>600)this.relearn();
+    return null;
+  }
+  // Date le début du flash par la méthode de l'aire, en lumière linéaire : chaque image, exposée entre
+  // l'horodatage précédent et le sien, « contient » une fraction u du flash ; début = plateau − somme des u × durée.
+  onset(kEnd){
+    const N=this.N,k0=this.k0,lo=this.loQ,C=this.peakQ-lo,Cg=this.peak-this.lo;
+    if(!(C>0))return null;
+    const u=i=>Math.min(1,Math.max(0,(this.Q[i%N]-lo)/C));
+    let m=k0;while(m<kEnd&&u(m)<0.9)m++;
+    const uMin=Math.max(0.03,3*this.nzQ/C),first=Math.max(1,k0-2,this.k-N+1);
+    let area=0,part=false;
+    for(let i=first;i<=m;i++){
+      const ui=u(i);if(i<k0&&ui<uMin)continue;
+      if(ui>0.1&&ui<0.9)part=true;                             // image à demi éclairée dans la montée
+      let dt=this.T[i%N]-this.T[(i-1)%N];
+      // image perdue juste avant : une image partielle n'a posé qu'une période ; une image pleine qui ouvre
+      // la montée a vu le flash commencer quelque part dans le trou (on prend le milieu)
+      if(this.iv&&dt>this.iv*1.5){if(ui<0.9)dt=this.iv;else if(!(area>0))dt=(dt+this.iv)/2;}
+      area+=ui*dt;
+    }
+    const on=this.T[m%N]-area;
+    this.lastOn=on;this.C=this.C===null?Cg:this.C+0.3*(Cg-this.C);
+    return{t:on,c:Cg,part:part,T:this.iv};
+  }
 }
 
-// ===== SETUP UI =====
-function buildAnalyzerSetupUI(){
-  const grid = document.getElementById('az-fps-grid');
-  grid.innerHTML = '';
-  ANALYZER_FPS.forEach(f => {
-    const btn = document.createElement('div');
-    btn.className = 'az-fps-btn' + (f===analyzerFps ? ' active' : '');
-    btn.textContent = f;
-    btn.onclick = () => {
-      analyzerFps = f;
-      buildAnalyzerSetupUI();
-    };
-    grid.appendChild(btn);
-  });
-  document.getElementById('az-passes-val').textContent = analyzerPassesTarget;
-  document.getElementById('az-passes-minus').disabled = analyzerPassesTarget <= 5;
-  document.getElementById('az-passes-plus').disabled = analyzerPassesTarget >= 20;
-  document.getElementById('az-eta').textContent = analyzerPassesTarget;
+// ---------- Correction de fenêtre d'intégration ----------
+// La méthode de l'aire suppose qu'une image « voit » toute la durée T entre deux images.
+// En réalité elle n'en voit qu'une part w (pose courte, capteur saturé…). Le début estimé est alors décalé de
+//     −T/2 + (c − ½)·w·T      avec c = 1 si l'horodatage marque la fin de la pose, 0 s'il en marque le début.
+// w se lit dans les données : en pose pleine, 8 flashs sur 10 commencent par une image à demi éclairée
+// (10 à 90 %) ; en pose instantanée, aucun. D'où w ≈ (part des flashs à image partielle) / 0,8.
+//  - convention « fin de pose » connue (horodatage de présentation, ou WebKit) : correction complète ;
+//  - convention inconnue (horodatage du pilote de caméra sous Chrome) : seule la part fixe T/2 est corrigée,
+//    ce qui borne l'erreur à ±w·T/2 au lieu de risquer de la doubler.
+function integrationStats(list){
+  const n=list.length;
+  return{n:n,T:n?medianOf(list.map(f=>f.T||0)):0,p:n?list.filter(f=>f.part).length/n:0};
+}
+// Renvoie le retard (ms) à ajouter aux débuts de flash de la session.
+function integrationCorr(is,endConv){
+  if(!is||!is.n||!(is.T>0))return 0;
+  const w=Math.min(1,is.p/0.8);
+  return is.T/2-(endConv?w*is.T/2:0);
+}
+
+// ---------- Appariement flashs ↔ bips ----------
+// Réglages (±30 ms, 60 %, 6 couples, 10 flashs au minimum) validés par simulation de sessions complètes :
+// 0 valeur fausse sur 800 sessions hors plage ou sans rapport, 100 % de réussite dans la plage.
+// Cherche le décalage (bip − flash) partagé par le plus grand nombre de couples, puis vérifie qu'il
+// « couvre » la période : des coïncidences fortuites (décalage hors plage, sons sans rapport) n'apparient
+// qu'une petite part des flashs, alors qu'un vrai décalage les apparie presque tous.
+function findLock(F,B){
+  const D=[];
+  for(let i=0;i<F.length;i++){const tf=F[i].t;
+    for(let j=0;j<B.length;j++){const d=B[j].t-tf;if(d>=-LAG_MAX_MS&&d<=LAG_MAX_MS)D.push({d:d,i:i,j:j});}}
+  if(D.length<MIN_LOCK)return null;
+  D.sort((x,y)=>x.d-y.d);
+  const wins=[];
+  for(let a=0,b=0;b<D.length;b++){while(D[b].d-D[a].d>CLUSTER_WIN_MS)a++;wins.push({n:b-a+1,c:D[(a+b)>>1].d});}
+  wins.sort((x,y)=>y.n-x.n||Math.abs(x.c)-Math.abs(y.c));
+  const clusters=[];
+  for(const w of wins){
+    if(w.n<3||clusters.length>=8)break;
+    if(clusters.every(c=>Math.abs(c.c-w.c)>150))clusters.push(w);
+  }
+  if(!clusters.length||clusters[0].n<MIN_LOCK)return null;
+  const best=clusters[0];
+  // appariement un-pour-un autour d'un décalage candidat, et couverture de la période
+  const solve=c=>{
+    const cand=D.filter(x=>Math.abs(x.d-c.c)<=PAIR_TOL_MS).sort((x,y)=>Math.abs(x.d-c.c)-Math.abs(y.d-c.c));
+    const uf=new Set(),ub=new Set(),pairs=[];
+    for(const x of cand){
+      if(uf.has(x.i)||ub.has(x.j))continue;
+      uf.add(x.i);ub.add(x.j);pairs.push({d:x.d,tf:F[x.i].t,par:B[x.j].par,part:F[x.i].part,T:F[x.i].T});
+    }
+    if(pairs.length<MIN_LOCK)return null;
+    pairs.sort((x,y)=>x.tf-y.tf);
+    // Signal perdu puis retrouvé : si un trou de plus de 6 s sépare deux couples et qu'au moins 8 couples le
+    // suivent, on repart d'après le trou (sinon les flashs restés seuls pendant la coupure bloqueraient tout).
+    {let cut=0;for(let i=pairs.length-1;i>0;i--)if(pairs[i].tf-pairs[i-1].tf>6000){cut=i;break;}
+     if(cut>0&&pairs.length-cut>=8)pairs.splice(0,cut);}
+    // Couverture, du premier couple jusqu'à MAINTENANT : on compte les flashs dont le bip aurait déjà dû arriver
+    // (et inversement). Une coïncidence passagère est ainsi vite diluée par les flashs suivants restés seuls.
+    const t0=pairs[0].tf-1,tNow=Math.max(F[F.length-1].t+150,B[B.length-1].t); // un flash est signalé ~150 ms après son début
+    let nF=0,nB=0;
+    for(const f of F)if(f.t>=t0&&f.t+c.c<=tNow-100)nF++;
+    for(const b of B){const t=b.t-c.c;if(t>=t0-PAIR_TOL_MS&&t+250<=tNow)nB++;}
+    nF=Math.max(nF,pairs.length);nB=Math.max(nB,pairs.length);
+    // La tolérance étroite (±30 ms) sert à RECONNAÎTRE le signal. Pour CALCULER la valeur, on reprend les couples
+    // sur une tolérance élargie autour du décalage trouvé : si la dispersion réelle est forte, la fenêtre étroite
+    // tronquerait la distribution, décalerait la médiane et ferait croire à une mesure précise.
+    const c0=medianOf(pairs.map(p=>p.d));
+    const wide=D.filter(x=>Math.abs(x.d-c0)<=STAT_TOL_MS&&F[x.i].t>=t0).sort((x,y)=>Math.abs(x.d-c0)-Math.abs(y.d-c0));
+    const wf=new Set(),wb=new Set(),stat=[];
+    for(const x of wide){
+      if(wf.has(x.i)||wb.has(x.j))continue;
+      wf.add(x.i);wb.add(x.j);stat.push({d:x.d,tf:F[x.i].t,par:B[x.j].par,part:F[x.i].part,T:F[x.i].T});
+    }
+    stat.sort((x,y)=>x.tf-y.tf);
+    return{center:medianOf(stat.map(p=>p.d)),pairs:pairs,stat:stat,coverF:pairs.length/nF,coverB:pairs.length/nB,ambiguous:false,kind:''};
+  };
+  const ok=[];
+  for(const c of clusters){
+    if(c.n<Math.max(3,0.7*best.n))continue;
+    const r=solve(c);
+    if(r&&r.coverF>=COVER_F_MIN&&r.coverB>=COVER_B_MIN)ok.push(r);
+  }
+  if(!ok.length)return null;
+  if(ok.length===1)return ok[0];
+  // Plusieurs décalages couvrent la période : soit le signal est régulier (ancien générateur, un flash pile
+  // chaque seconde), soit il y a deux sons par flash (le micro entend le Générateur en direct ET la chaîne).
+  // On retient le plus petit en valeur absolue et on le signale.
+  const pick=ok.reduce((p,c)=>Math.abs(c.center)<Math.abs(p.center)?c:p,ok[0]);
+  const iv=[];for(let i=1;i<F.length;i++)iv.push(F[i].t-F[i-1].t);
+  const m=medianOf(iv);
+  pick.ambiguous=true;
+  pick.kind=(iv.length>=3&&medianOf(iv.map(v=>Math.abs(v-m)))<25)?'regular':'double';
+  return pick;
+}
+
+// ---------- Statistiques robustes (médiane + MAD, décisions n° 27 à 29) ----------
+function robustStats(arr){
+  const n=arr.length,med=medianOf(arr),mad=medianOf(arr.map(v=>Math.abs(v-med))),sigma=mad*1.4826;
+  const lim=Math.max(20,3*sigma); // « très différent des autres » : au-delà de 3 σ (et d'au moins 20 ms)
+  return{n:n,median:med,sigma:sigma,min:Math.min.apply(null,arr),max:Math.max.apply(null,arr),
+    nOutliers:arr.filter(v=>Math.abs(v-med)>lim).length};
+}
+// Erreur type de la médiane de n valeurs de dispersion sigma
+function seOf(sigma,n){return 1.2533*sigma/Math.sqrt(Math.max(1,n));}
+// Fiabilité = incertitude du RÉSULTAT (erreur type, étalonnage compris), pas la dispersion flash à flash :
+// une caméra à pose courte disperse de ±10 ms par flash, ce que la médiane de 10 à 20 flashs absorbe.
+function qualityOf(se,outFrac){
+  if(se<=3&&outFrac<=0.2)return'bonne';
+  if(se<=8&&outFrac<=0.35)return'moyenne';
+  return'faible';
+}
+
+// ---------- État ----------
+const TEST={video:'',audio:''}; // forçages réservés au banc d'essai (voir window.SyncTestPro)
+const ana={
+  state:'idle',mode:'measure',token:0,target:10,
+  stream:null,video:null,cv:null,cx:null,src:null,det:null,mute:null,
+  audioMode:'',videoMode:'',vLabel:'',aLabel:'',camFps:0,
+  fd:null,flashes:[],bips:[],lock:null,noise:0,
+  t0:0,raf:null,uiAt:0,
+  rvfc:false,rvfcCount:0,rvfcDead:false,videoReadyAt:0,vOff:null,vProbe:0,vCap:0,vMed:0,lastMt:-1,
+  lastCT:-1,ctChanged:0,lastFrameT:0,frames:0,
+  lum:0,env:0,nf:0,thr:0,lastLvlAt:0,triedScript:false,mutedAt:0,voiceProc:false,searchSince:0,bothSince:0,second:0,
+  panelOpen:false,keepPanel:false
+};
+let lastResult=null;        // résultat affiché (peut venir de l'historique)
+let lastFresh=null;         // dernier résultat produit par une mesure dans cette session
+let resultFromHistory=false;
+let workletPromise=null;
+
+// ---------- Accueil de l'Analyseur ----------
+function getCalibMap(){const c=loadJSON(CALIB_KEY,{});return(c&&typeof c==='object')?c:{};}
+function getCalib(key){const c=getCalibMap()[key];return(c&&typeof c.offset==='number')?c:null;}
+function mediaAvailable(){return!!(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
+function refreshSetup(){
+  $('az-passes-val').textContent=prefs.passes;
+  $('az-passes-minus').disabled=prefs.passes<=PASSES_MIN;
+  $('az-passes-plus').disabled=prefs.passes>=PASSES_MAX;
+  $('az-eta').textContent=Math.round(4+prefs.passes*1.1);
+  $('az-debug-toggle').classList.toggle('active',!!prefs.debug);
+  $('az-compat-toggle').classList.toggle('active',!!prefs.compat);
+  const box=$('az-calib'),map=getCalibMap(),cal=prefs.lastKey?getCalib(prefs.lastKey):null;
+  const bm=$('az-btn-measure'),bc=$('az-btn-calib');
+  if(cal){
+    box.className='az-calib ok';
+    box.innerHTML='<span class="t">✓ Étalonné le '+esc(dateStr(cal.ts))+'</span>'+
+      'Décalage propre des appareils : '+Math.round(Math.abs(cal.offset))+' ms, retiré des mesures faites avec la même caméra et le même micro. À refaire si tu changes l\'un des deux appareils ou la sortie son du Générateur.'+
+      '<br><button class="az-link" onclick="clearCalibConfirm()">Effacer l\'étalonnage</button>';
+    // étalonné : « Mesurer » est l'action principale
+    bm.className='az-start-btn';bm.style.order='0';bm.textContent='▶ Mesurer';
+    bc.className='az-second-btn';bc.style.order='1';bc.textContent='◎ Refaire l\'étalonnage';
+  }else{
+    const other=Object.keys(map).length>0;
+    box.className='az-calib none';
+    box.innerHTML='<span class="t">Pas d\'étalonnage'+(other?' pour cette source':'')+'</span>'+
+      'Sans lui, le résultat reste approché (± quelques dizaines de ms) : il inclut le décalage propre des deux appareils.'+
+      (other?'<br><button class="az-link" onclick="clearCalibConfirm()">Effacer les étalonnages enregistrés</button>':'');
+    // pas encore étalonné : le bouton principal est l'étalonnage, la mesure approchée reste possible
+    bc.className='az-start-btn';bc.style.order='0';bc.textContent='◎ Étalonner d\'abord';
+    bm.className='az-second-btn';bm.style.order='1';bm.textContent='▶ Mesurer sans étalonner';
+  }
+  // Sans adresse sécurisée, caméra et micro sont interdits : on le dit tout de suite, pas après l'installation
+  const ok=mediaAvailable();
+  bm.disabled=!ok;bc.disabled=!ok;
+  if(!ok)showAnaError(mediaMissingMsg());
 }
 function adjustPasses(d){
-  // V8.1.2 — plage étendue à 5-20 (au lieu de 5-10) pour meilleur moyennage statistique
-  analyzerPassesTarget = Math.max(5, Math.min(20, analyzerPassesTarget + d));
-  buildAnalyzerSetupUI();
+  prefs.passes=Math.max(PASSES_MIN,Math.min(PASSES_MAX,prefs.passes+d));savePrefs();refreshSetup();
+}
+function toggleDebug(){prefs.debug=!prefs.debug;savePrefs();refreshSetup();}
+function toggleCompat(){prefs.compat=!prefs.compat;savePrefs();refreshSetup();}
+function clearCalibConfirm(){
+  if(confirm('Effacer l\'étalonnage (toutes sources) ? Les prochaines mesures ne seront plus corrigées.')){saveJSON(CALIB_KEY,{});refreshSetup();}
+}
+// L'étalonnage ne se lance jamais d'un seul geste : un écran rappelle qu'il se fait sans la chaîne
+function askCalib(){
+  if(ana.state!=='idle')return;
+  $('az-calib-eta').textContent=Math.round(4+Math.max(prefs.passes,CALIB_MIN_PASSES)*1.1);
+  showScreen('analyzer-calib');$('analyzer-calib').scrollTop=0;
+}
+function backToAnalyzerSetup(){$('az-howto').open=!prefs.done;refreshSetup();showScreen('analyzer-setup');}
+const RELOAD_BTN='<br><button class="az-link" onclick="location.reload()">Recharger la page</button>';
+function showAnaError(html){
+  const s=$('az-error-slot');s.innerHTML='<div class="az-error">'+html+'</div>';s.hidden=false;
+  $('analyzer-setup').scrollTop=0;
+}
+function clearAnaError(){const s=$('az-error-slot');s.innerHTML='';s.hidden=true;}
+
+const MSG_HTTPS='Cette page est ouverte depuis un fichier ou une adresse non sécurisée : la caméra et le micro sont bloqués.<br>'+
+  'Ouvre-la par son adresse internet, celle qui commence par <strong>https://</strong>.';
+const MSG_NOMEDIA='Ce navigateur ne donne pas accès à la caméra ni au micro (page ouverte depuis une autre appli ?).<br>'+
+  'Ouvre-la directement dans <strong>Safari</strong> ou <strong>Chrome</strong>.';
+function mediaMissingMsg(){return window.isSecureContext?MSG_NOMEDIA:MSG_HTTPS;}
+function mediaErrorHtml(e){
+  const n=(e&&e.name)||'';
+  if(n==='NotAllowedError'||n==='SecurityError'||n==='PermissionDeniedError')
+    return'Accès à la caméra ou au micro refusé.<br>'+(IS_IOS
+      ?'Touche « Recharger la page », puis « Autoriser ». Si l\'iPhone ne demande rien : <strong>Réglages → Safari</strong> (ou Réglages → Apps → Safari) <strong>→ Caméra et Micro → Autoriser</strong>.'
+      :'Clique sur l\'icône caméra de la barre d\'adresse, autorise la caméra et le micro, puis recharge la page.')+RELOAD_BTN;
+  if(n==='NotFoundError'||n==='DevicesNotFoundError'||n==='OverconstrainedError')
+    return'Aucune caméra ou aucun micro utilisable n\'a été trouvé sur cet appareil.';
+  if(n==='NotReadableError'||n==='TrackStartError'||n==='AbortError')
+    return'La caméra ou le micro est déjà utilisé par une autre application. Ferme-la, puis réessaie.';
+  return'Impossible d\'ouvrir la caméra et le micro ('+esc(n||(e&&e.message)||'erreur inconnue')+').';
 }
 
-// ===== RUN =====
-async function startAnalyzerRun(){
-  showScreen('analyzer-run');
-  analyzerState = 'setup';
+// ---------- Ouverture caméra + micro ----------
+async function openStream(){
+  const build=useIds=>({
+    video:Object.assign({width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60}},
+      useIds&&prefs.vId?{deviceId:{exact:prefs.vId}}:{facingMode:{ideal:'environment'}}),
+    // AGC, réduction de bruit et annulation d'écho coupés : ils lissent l'attaque du bip
+    audio:Object.assign({echoCancellation:false,autoGainControl:false,noiseSuppression:false},
+      useIds&&prefs.aId?{deviceId:{exact:prefs.aId}}:{})
+  });
+  try{return await navigator.mediaDevices.getUserMedia(build(true));}
+  catch(e){
+    if((prefs.vId||prefs.aId)&&e&&(e.name==='OverconstrainedError'||e.name==='NotFoundError'||e.name==='NotReadableError')){
+      prefs.vId='';prefs.aId='';savePrefs(); // la source mémorisée a disparu : retour aux sources par défaut
+      return await navigator.mediaDevices.getUserMedia(build(false));
+    }
+    throw e;
+  }
+}
+async function populateSources(){
+  try{
+    const devs=await navigator.mediaDevices.enumerateDevices();
+    const vt=ana.stream&&ana.stream.getVideoTracks()[0],at=ana.stream&&ana.stream.getAudioTracks()[0];
+    const curV=(vt&&vt.getSettings().deviceId)||'',curA=(at&&at.getSettings().deviceId)||'';
+    const fill=(sel,kind,cur,word)=>{
+      sel.innerHTML='';let i=0;
+      devs.filter(d=>d.kind===kind).forEach(d=>{
+        const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||(word+' '+(++i));
+        if(d.deviceId===cur)o.selected=true;sel.appendChild(o);
+      });
+    };
+    fill($('src-video'),'videoinput',curV,'Caméra');fill($('src-audio'),'audioinput',curA,'Micro');
+  }catch(e){}
+}
+function applyPanels(){
+  $('az-source-panel').classList.toggle('visible',ana.panelOpen);
+  $('az-debug-panel').classList.toggle('visible',!!prefs.debug&&!ana.panelOpen); // jamais l'un sur l'autre
+}
+function toggleSourcePanel(){ana.panelOpen=!ana.panelOpen;applyPanels();}
+function onSourceChange(){
+  prefs.vId=$('src-video').value||'';prefs.aId=$('src-audio').value||'';savePrefs();
+  const m=ana.mode;ana.keepPanel=true;      // le panneau reste ouvert : on règle souvent image puis son
+  abortAnalyzer(true);startAnalyzer(m);
+}
+function sourceKey(){return[ana.vLabel,ana.aLabel,ana.videoMode,ana.audioMode].join('|');}
 
-  // Reset state
-  pendingFlashes = []; bipBuffer = []; measurements = [];
-  lumBaseline = 30; rmsBaseline = 0.005;
-  lastFlashAt = -Infinity; lastBipAt = -Infinity;
-  prevLum = 0; prevLumT = 0; prevRms = 0; prevRmsT = 0;
-  vuVideoSmooth = 0; vuAudioSmooth = 0;
-  debugStats = {
-    lum: 0, lumThr: 0, rms: 0, rmsThr: 0,
-    flashes: 0, bips: 0, lastDelta: null,
-    camFps: 0, audioSr: 0
+// ---------- Chaîne audio de mesure ----------
+function workletCode(){
+  return BipDetector.toString()+`
+class StpBipProcessor extends AudioWorkletProcessor{
+  constructor(){super();this.det=new BipDetector(sampleRate);this.dead=false;
+    this.port.onmessage=e=>{if(e.data==='stop')this.dead=true;};}
+  process(inputs){
+    if(this.dead)return false;
+    const ch=inputs[0]&&inputs[0][0];
+    if(ch&&ch.length){const out=this.det.feed(ch,currentFrame);if(out)this.port.postMessage(out);}
+    return true;
+  }
+}
+registerProcessor('stp-bip',StpBipProcessor);`;
+}
+function loadWorklet(){
+  if(!workletPromise){
+    const code=workletCode();
+    workletPromise=(async()=>{
+      let url=null;
+      try{url=URL.createObjectURL(new Blob([code],{type:'application/javascript'}));await audioCtx.audioWorklet.addModule(url);}
+      catch(e){await audioCtx.audioWorklet.addModule('data:application/javascript;charset=utf-8,'+encodeURIComponent(code));}
+      finally{if(url)try{URL.revokeObjectURL(url);}catch(e){}}
+    })();
+    workletPromise.catch(()=>{workletPromise=null;});
+  }
+  return workletPromise;
+}
+// Secours sans AudioWorklet : même détecteur, exécuté sur le fil principal
+function makeScriptDetector(token){
+  const sp=audioCtx.createScriptProcessor(1024,1,1),det=new BipDetector(audioCtx.sampleRate),sr=audioCtx.sampleRate;
+  sp.onaudioprocess=ev=>{
+    if(token!==ana.token)return;
+    const ch=ev.inputBuffer.getChannelData(0);
+    // playbackTime = instant de SORTIE de ce tampon ; l'entrée lue ici a été captée deux tampons plus tôt
+    // (hypothèse sur le double tampon des navigateurs, à confirmer par mesure croisée avec l'AudioWorklet)
+    const f0=Math.round((ev.playbackTime||audioCtx.currentTime)*sr)-2*ch.length;
+    const out=det.feed(ch,f0);if(out)onDetMsg(out);
   };
-  document.getElementById('az-debug-panel').classList.toggle('visible', debugMode);
-
-  document.getElementById('az-run-info').textContent =
-    `Mesure · ${analyzerFps} fps · ${analyzerPassesTarget} passes`;
-  document.getElementById('az-pass-num').textContent = 0;
-  document.getElementById('az-pass-target').textContent = analyzerPassesTarget;
-  document.getElementById('az-progress-fill').style.width = '0%';
-  document.getElementById('az-status').textContent = 'Demande des permissions…';
-
-  // 1. Permissions caméra + micro
-  try {
-    videoStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        frameRate: { ideal: 60, min: 30 }   // V8.1.2 — best effort 60 fps
-      },
-      audio: false
-    });
-    audioStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: false,
-        autoGainControl: false,
-        noiseSuppression: false
-      },
-      video: false
-    });
-  } catch (e) {
-    return showAnalyzerError(
-      'Accès caméra/micro refusé.<br><br>' +
-      'Va dans <strong>Réglages → Safari → Caméra / Microphone</strong> et autorise pour ce site, puis recharge la page.<br><br>' +
-      'Détail : ' + (e.message || e.name || 'permission denied')
-    );
+  return sp;
+}
+async function setupDetector(track,token){
+  ana.src=audioCtx.createMediaStreamSource(new MediaStream([track]));
+  // Sortie muette : le détecteur doit être relié à la destination pour tourner, mais rien ne sort.
+  ana.mute=audioCtx.createGain();ana.mute.gain.value=0;ana.mute.connect(audioCtx.destination);
+  let node=null;
+  if(TEST.audio!=='script'&&!prefs.compat&&audioCtx.audioWorklet&&typeof AudioWorkletNode==='function'){
+    try{
+      await Promise.race([loadWorklet(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('délai dépassé')),4000))]);
+      if(token!==ana.token)return;
+      node=new AudioWorkletNode(audioCtx,'stp-bip',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1],
+        channelCount:1,channelCountMode:'explicit',channelInterpretation:'speakers'});
+      node.port.onmessage=e=>{if(token===ana.token)onDetMsg(e.data);};
+      ana.audioMode='worklet';
+    }catch(e){node=null;}
   }
-
-  // 2. Setup preview vidéo
-  videoEl = document.getElementById('analyzer-video');
-  videoEl.srcObject = videoStream;
-  videoEl.muted = true;
-  videoEl.playsInline = true;
-  try { await videoEl.play(); } catch(e) {}
-
-  // V8.1.3 — Lecture fps réel obtenu (peut différer de l'ideal demandé)
-  try {
-    const vTrack = videoStream.getVideoTracks()[0];
-    const vSettings = vTrack.getSettings();
-    debugStats.camFps = vSettings.frameRate || 0;
-  } catch(e) { debugStats.camFps = 0; }
-
-  // 3. Setup canvas downscale pour détection
-  if (!captureCanvas) {
-    captureCanvas = document.createElement('canvas');
-    captureCanvas.width = 160; captureCanvas.height = 90;
-    captureCtx = captureCanvas.getContext('2d', { willReadFrequently: true });
+  if(token!==ana.token)return;
+  if(!node){node=makeScriptDetector(token);ana.audioMode='script';}
+  ana.det=node;ana.src.connect(node);node.connect(ana.mute);
+}
+function dropDetector(){
+  if(ana.det){
+    try{if(ana.det.port)ana.det.port.postMessage('stop');else ana.det.onaudioprocess=null;}catch(e){}
+    try{ana.det.disconnect();}catch(e){}
+    ana.det=null;
   }
+}
+function onDetMsg(list){
+  if(ana.state!=='running'||!list)return;
+  clkSample();
+  for(const m of list){
+    if(m.k==='lvl'){ana.env=m.e;ana.nf=m.nf;ana.thr=m.thr;ana.lastLvlAt=performance.now();}
+    else if(m.k==='noise'){ana.noise++;}
+    else if(m.k==='second'){ana.second++;}
+    else if(m.k==='bip'){
+      if(clk.off===null)continue;
+      const t=perfMsOfAudio(m.f/audioCtx.sampleRate);
+      if(t-ana.t0<ANA_WARMUP_MS)continue;
+      ana.bips.push({t:t,par:m.par,peak:m.peak});
+      pulseVUFlash('audio');relock();
+      if(ana.state!=='running')return;
+    }
+  }
+}
 
-  // 4. Setup audio analyser
+// ---------- Images de la caméra ----------
+function startVideoFrames(token){
+  const v=ana.video;
+  ana.rvfc=TEST.video!=='poll'&&typeof v.requestVideoFrameCallback==='function';
+  if(!ana.rvfc)return;
+  const cb=(now,md)=>{
+    if(token!==ana.token)return;
+    ana.rvfcCount++;
+    if(!ana.rvfcDead)onVideoFrame(now,md||{});
+    v.requestVideoFrameCallback(cb);
+  };
+  v.requestVideoFrameCallback(cb);
+}
+// Horodatage d'une image, par ordre de préférence :
+//  capture : instant de capture fourni par le navigateur (Chrome) ;
+//  media   : horodatage du flux, recalé sur l'horloge du navigateur par le plus petit retard observé ;
+//  present : instant de présentation de l'image (à défaut).
+// Le mode est choisi sur les premières images puis figé pour toute la mesure.
+function onVideoFrame(now,md){
+  clkSample();
+  const ct=md.captureTime,mt=md.mediaTime;
+  const pt=(typeof md.presentationTime==='number'&&md.presentationTime>0)?md.presentationTime:now;
+  const capOk=typeof ct==='number'&&ct>0&&ct<=now+50&&now-ct<1500;
+  const medOk=typeof mt==='number'&&mt>0&&mt!==ana.lastMt;
+  if(typeof mt==='number')ana.lastMt=mt;
+  if(!ana.videoMode){
+    ana.vProbe++;if(capOk)ana.vCap++;if(medOk)ana.vMed++;
+    // le recalage du mode « media » (plus petit retard observé) commence dès le sondage
+    if(medOk){const d0=pt-mt*1000;ana.vOff=(ana.vOff===null||Math.abs(d0-ana.vOff)>500)?d0:Math.min(d0,ana.vOff+0.01);}
+    // choix sur ~1,2 s (dans les 1,5 s d'échauffement) : il faut au moins 90 % d'images valides.
+    // Pendant ce sondage le détecteur ne reçoit rien : il démarre ensuite sur une seule base de temps.
+    if(now-ana.t0>=1200&&ana.vProbe>=10){
+      const f=TEST.video,need=0.9*ana.vProbe;
+      if(f==='present')ana.videoMode='present';
+      else if(f==='media')ana.videoMode=ana.vMed>=need?'media':'present';
+      else ana.videoMode=ana.vCap>=need?'capture':(ana.vMed>=need?'media':'present');
+      ana.fd=new FlashDetector();ana.lastFrameT=0;
+    }
+    return;
+  }
+  let t;
+  if(ana.videoMode==='capture'){if(!capOk)return;t=ct;}
+  else if(ana.videoMode==='media'){
+    if(!medOk)return;
+    const m=mt*1000,d=pt-m;
+    if(ana.vOff===null||Math.abs(d-ana.vOff)>500)ana.vOff=d;else ana.vOff=Math.min(d,ana.vOff+0.01);
+    t=m+ana.vOff;
+  }else t=pt;
+  processFrame(t);
+}
+// Secours sans requestVideoFrameCallback : on surveille l'avance de la vidéo à chaque rafraîchissement
+function pollVideo(now){
+  const v=ana.video;if(!v||v.readyState<2||!v.videoWidth)return;
+  if(!ana.videoMode)ana.videoMode='poll';
+  const ct=v.currentTime;
+  if(ct!==ana.lastCT){ana.lastCT=ct;ana.ctChanged=now;processFrame(now);}
+  else if(now-ana.ctChanged>400)processFrame(now);
+}
+function processFrame(t){
+  const v=ana.video;if(!v||!v.videoWidth)return;
+  if(ana.lastFrameT&&t<=ana.lastFrameT)return; // horodatage non croissant : image ignorée
+  let d;
+  try{ana.cx.drawImage(v,0,0,CAP_W,CAP_H);d=ana.cx.getImageData(0,0,CAP_W,CAP_H).data;}catch(e){return;}
+  let s=0,sl=0;
+  for(let i=0;i<d.length;i+=4){
+    s+=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];                 // luminance Rec.709 (octets) : seuils et affichage
+    sl+=0.2126*LIN[d[i]]+0.7152*LIN[d[i+1]]+0.0722*LIN[d[i+2]]; // la même en lumière linéaire : datation
+  }
+  const lum=s/(d.length/4),lin=sl/(d.length/4);
+  ana.lastFrameT=t;ana.lum=lum;ana.frames++;
+  const ev=ana.fd.push(t,lum,lin);
+  if(ev&&ev.t-ana.t0>=ANA_WARMUP_MS){
+    ana.flashes.push({t:ev.t,c:ev.c,part:ev.part,T:ev.T});
+    pulseVUFlash('video');relock();
+  }
+}
+
+// ---------- Déroulement d'une mesure ----------
+function relock(){
+  if(ana.state!=='running')return;
+  const now=performance.now();
+  if(ana.flashes.length&&now-ana.flashes[0].t>EVENT_KEEP_MS)ana.flashes=ana.flashes.filter(e=>now-e.t<=EVENT_KEEP_MS);
+  if(ana.bips.length&&now-ana.bips[0].t>EVENT_KEEP_MS)ana.bips=ana.bips.filter(e=>now-e.t<=EVENT_KEEP_MS);
+  ana.lock=findLock(ana.flashes,ana.bips);
+  if(ana.lock&&ana.lock.pairs.length>=ana.target)finishAnalyzer();
+}
+function resetRun(){
+  ana.flashes=[];ana.bips=[];ana.lock=null;ana.noise=0;
+  ana.audioMode='';ana.videoMode='';ana.vLabel='';ana.aLabel='';ana.camFps=0;
+  ana.rvfc=false;ana.rvfcCount=0;ana.rvfcDead=false;ana.videoReadyAt=0;ana.vOff=null;ana.vProbe=0;ana.vCap=0;ana.vMed=0;ana.lastMt=-1;
+  ana.lastCT=-1;ana.ctChanged=0;ana.lastFrameT=0;ana.frames=0;
+  ana.lum=0;ana.env=0;ana.nf=0;ana.thr=0;ana.lastLvlAt=0;ana.triedScript=false;ana.uiAt=0;ana.mutedAt=0;ana.voiceProc=false;ana.searchSince=0;ana.bothSince=0;ana.second=0;
+  ana.target=ana.mode==='calib'?Math.max(prefs.passes,CALIB_MIN_PASSES):prefs.passes;if(!ana.keepPanel)ana.panelOpen=false;ana.keepPanel=false;
+  if(!ana.cv){ana.cv=document.createElement('canvas');ana.cv.width=CAP_W;ana.cv.height=CAP_H;
+    ana.cx=ana.cv.getContext('2d',{willReadFrequently:true});}
+  applyPanels();$('az-src-names').textContent='';
+  $('az-run-info').textContent=(ana.mode==='calib'?'Étalonnage':'Mesure')+' · '+ana.target+' flashs';
+  $('az-phase').textContent='Préparation…';
+  $('az-status').textContent='Autorise la caméra et le micro…';
+  $('az-count').hidden=true;$('az-checks').hidden=false;$('az-bar').hidden=true;
+  $('az-pass-num').textContent='0';$('az-pass-target').textContent=ana.target;
+  $('az-progress-fill').style.width='0%';
+  $('az-vu-video').style.width='0%';$('az-vu-audio').style.width='0%';
+  setCheck('flash',false,'pas encore vu');setCheck('bip',false,'pas encore entendu');
+}
+async function startAnalyzer(mode){
+  if(ana.state!=='idle')return;
+  appMode='ana';deactivateMediaSession();
+  const token=++ana.token;
+  ana.mode=mode==='calib'?'calib':'measure';ana.state='starting';
+  ensureAudio();clearAnaError();resetRun();showScreen('analyzer-run');
+  if(!mediaAvailable())return anaFail(token,mediaMissingMsg());
+  let stream;
+  try{stream=await openStream();}catch(e){return anaFail(token,mediaErrorHtml(e));}
+  if(token!==ana.token){stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});return;} // annulé pendant la demande
+  ana.stream=stream;anaUsed=true;
+  const vt=stream.getVideoTracks()[0],at=stream.getAudioTracks()[0];
+  if(!vt||!at)return anaFail(token,'Il faut à la fois une caméra et un micro pour mesurer.');
+  ana.vLabel=vt.label||'caméra';ana.aLabel=at.label||'micro';
+  $('az-src-names').innerHTML='<div>Image : '+esc(ana.vLabel)+'</div><div>Son : '+esc(ana.aLabel)+'</div>';
+  try{ana.camFps=vt.getSettings().frameRate||0;}catch(e){}
+  const onEnded=()=>{if(token===ana.token)anaFail(token,'La caméra ou le micro s\'est arrêté (débranché, ou repris par une autre application).');};
+  vt.addEventListener('ended',onEnded);at.addEventListener('ended',onEnded);
+  // Interruption par le système (appel, Siri, autre appli) : la piste devient muette sans forcément se terminer
+  const onMute=()=>{if(token===ana.token&&!ana.mutedAt)ana.mutedAt=performance.now();};
+  const onUnmute=()=>{if(token===ana.token&&!vt.muted&&!at.muted)ana.mutedAt=0;};
+  [vt,at].forEach(t=>{t.addEventListener('mute',onMute);t.addEventListener('unmute',onUnmute);});
+  if(vt.muted||at.muted)ana.mutedAt=performance.now(); // déjà muette à l'ouverture : aucun événement ne le dirait
+  // Safari n'honore que echoCancellation (qui coupe aussi le gain automatique) : on vérifie qu'il est bien coupé
+  try{
+    if(at.getSettings&&at.getSettings().echoCancellation===true){
+      try{await at.applyConstraints({echoCancellation:false});}catch(e){}
+      ana.voiceProc=at.getSettings().echoCancellation===true;
+    }
+  }catch(e){}
+  if(token!==ana.token)return;
+  const v=ana.video=$('analyzer-video');
+  v.muted=true;v.playsInline=true;v.srcObject=new MediaStream([vt]);
+  try{await Promise.race([v.play(),new Promise(r=>setTimeout(r,3000))]);}catch(e){}
+  if(token!==ana.token)return;
   ensureAudio();
-  // En mode Analyseur on désactive le silent MP3 (Device 2 ne joue rien)
-  deactivateMediaSession();
-
-  try {
-    micSourceNode = audioCtx.createMediaStreamSource(audioStream);
-    // V8.1.1 — GainNode pour booster le signal micro (compense la perte à distance ~20cm écran)
-    // Gain ×4 ≈ +12 dB. À ajuster selon retours terrain (voir constante GAIN_MIC).
-    micGainNode = audioCtx.createGain();
-    micGainNode.gain.value = MIC_GAIN;
-    analyserNode = audioCtx.createAnalyser();
-    analyserNode.fftSize = 1024;
-    analyserNode.smoothingTimeConstant = 0;
-    micSourceNode.connect(micGainNode);
-    micGainNode.connect(analyserNode);
-    // PAS de connexion à destination → pas de feedback audio
-    audioRawBuf = new Float32Array(analyserNode.fftSize);
-    audioFreqBuf = new Uint8Array(analyserNode.frequencyBinCount); // V8.1 — FFT
-    debugStats.audioSr = audioCtx.sampleRate || 0; // V8.1.3
-  } catch(e) {
-    return showAnalyzerError('Erreur initialisation audio : ' + e.message);
-  }
-
-  // 5. Démarrer la boucle
-  analyzerStartedAt = performance.now();
-  analyzerState = 'running';
-  document.getElementById('az-status').textContent = 'Calibrage (1 s)…';
-  analyzerLoop();
+  try{await setupDetector(at,token);}
+  catch(e){return anaFail(token,'Impossible d\'analyser le son du micro ('+esc((e&&e.message)||e)+').');}
+  if(token!==ana.token)return;
+  ana.fd=new FlashDetector();
+  ana.t0=performance.now();ana.state='running';
+  keepAwake(true);populateSources();
+  startVideoFrames(token);
+  ana.raf=requestAnimationFrame(anaLoop);
 }
-
-function analyzerLoop(){
-  if (analyzerState !== 'running') return;
-  const now = performance.now();
-  const elapsedSinceStart = now - analyzerStartedAt;
-
-  // VIDÉO — luminance ROI centrale
-  let lum = 0;
-  if (videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
-    try {
-      captureCtx.drawImage(videoEl, 0, 0, captureCanvas.width, captureCanvas.height);
-      lum = computeLuminance(captureCtx, captureCanvas.width, captureCanvas.height);
-      if (elapsedSinceStart > STATE_WARMUP_MS) {
-        detectFlash(now, lum);
-      } else {
-        // pendant warmup : on initialise la baseline
-        lumBaseline = lumBaseline * 0.9 + lum * 0.1;
-      }
-    } catch(e) {}
-  }
-
-  // AUDIO — RMS
-  let rms = 0;
-  if (analyserNode) {
-    analyserNode.getFloatTimeDomainData(audioRawBuf);
-    let sumSq = 0;
-    for (let i = 0; i < audioRawBuf.length; i++) sumSq += audioRawBuf[i] * audioRawBuf[i];
-    rms = Math.sqrt(sumSq / audioRawBuf.length);
-    if (elapsedSinceStart > STATE_WARMUP_MS) {
-      detectBip(now, rms);
-    } else {
-      rmsBaseline = rmsBaseline * 0.9 + rms * 0.1;
-    }
-  }
-
-  // VU display (lissé pour affichage)
-  vuVideoSmooth = vuVideoSmooth * 0.85 + (lum/255) * 0.15;
-  vuAudioSmooth = vuAudioSmooth * 0.85 + Math.min(1, rms*5) * 0.15;
-  updateVU(vuVideoSmooth, vuAudioSmooth);
-
-  // V8.1.1 — Debug overlay
-  if (debugMode) {
-    debugStats.lum = lum;
-    debugStats.lumThr = Math.max(LUM_THRESHOLD_ABS, lumBaseline + LUM_THRESHOLD_DELTA);
-    debugStats.rms = rms;
-    debugStats.rmsThr = Math.max(RMS_THRESHOLD_ABS, rmsBaseline * RMS_THRESHOLD_FACTOR);
-    updateDebugDisplay();
-  }
-
-  // Update status
-  if (elapsedSinceStart < STATE_WARMUP_MS) {
-    const remaining = ((STATE_WARMUP_MS - elapsedSinceStart) / 1000).toFixed(1);
-    document.getElementById('az-status').textContent =
-      `Stabilisation auto-exposure & AGC… (${remaining} s)`;
-  } else if (measurements.length === 0) {
-    document.getElementById('az-status').textContent = 'En attente du signal…';
-  } else {
-    document.getElementById('az-status').textContent = `Mesure ${measurements.length}/${analyzerPassesTarget} OK`;
-  }
-
-  // Appariement flash ↔ bip
-  tryMatchAndRecord(now);
-
-  analyzerRafId = requestAnimationFrame(analyzerLoop);
+function stopAnalyzer(){
+  if(ana.raf){cancelAnimationFrame(ana.raf);ana.raf=null;}
+  dropDetector();
+  if(ana.src){try{ana.src.disconnect();}catch(e){}ana.src=null;}
+  if(ana.mute){try{ana.mute.disconnect();}catch(e){}ana.mute=null;}
+  if(ana.stream){ana.stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});ana.stream=null;}
+  if(ana.video){try{ana.video.pause();ana.video.srcObject=null;}catch(e){}}
+  keepAwake(false);
 }
-
-function computeLuminance(ctx, w, h){
-  // Calcul luminance Rec.709 sur toute l'image downscalée (160x90 = 14 400 pixels)
-  const img = ctx.getImageData(0, 0, w, h);
-  const data = img.data;
-  let sum = 0;
-  const n = data.length / 4;
-  for (let i = 0; i < data.length; i += 4) {
-    sum += 0.2126 * data[i] + 0.7152 * data[i+1] + 0.0722 * data[i+2];
-  }
-  return sum / n; // 0-255
+function anaFail(token,html){
+  if(token!==ana.token)return;
+  ana.token++;stopAnalyzer();ana.state='idle';
+  showAnaError(html);refreshSetup();showScreen('analyzer-setup');
 }
-
-function detectFlash(t, lum){
-  if (t - lastFlashAt < COOLDOWN_MS) {
-    lumBaseline = lumBaseline * 0.97 + lum * 0.03;
-    prevLum = lum; prevLumT = t;
-    return;
-  }
-  // V8.1.1 — Seuils luminance plus permissifs (110 absolu, +40 baseline)
-  const threshold = Math.max(LUM_THRESHOLD_ABS, lumBaseline + LUM_THRESHOLD_DELTA);
-  // V8.1.2 — Détection du franchissement de seuil ET interpolation sub-frame
-  if (lum > threshold && prevLum <= threshold && prevLumT > 0) {
-    // Interp linéaire : à quel instant exact la luminance a-t-elle atteint le seuil ?
-    //   threshold = prevLum + frac * (lum - prevLum)
-    //   → frac = (threshold - prevLum) / (lum - prevLum)
-    const frac = (threshold - prevLum) / (lum - prevLum);
-    const tInterp = prevLumT + frac * (t - prevLumT);
-    lastFlashAt = t;
-    pendingFlashes.push({ t: tInterp, matched: false });
-    pendingFlashes = pendingFlashes.slice(-30);
-    pulseVUFlash('video');
-    if (debugMode) debugStats.flashes++;
-    prevLum = lum; prevLumT = t;
-    return;
-  }
-  lumBaseline = lumBaseline * 0.97 + lum * 0.03;
-  prevLum = lum; prevLumT = t;
-}
-
-function detectBip(t, rms){
-  if (t - lastBipAt < COOLDOWN_MS) {
-    rmsBaseline = rmsBaseline * 0.95 + rms * 0.05;
-    prevRms = rms; prevRmsT = t;
-    return;
-  }
-  // V8.1.1 — Seuils RMS plus permissifs (0.02 absolu, baseline ×3.5)
-  const threshold = Math.max(RMS_THRESHOLD_ABS, rmsBaseline * RMS_THRESHOLD_FACTOR);
-  // V8.1.2 — Détection du franchissement de seuil ET interpolation sub-frame
-  if (rms > threshold && prevRms <= threshold && prevRmsT > 0) {
-    const frac = (threshold - prevRms) / (rms - prevRms);
-    const tInterp = prevRmsT + frac * (t - prevRmsT);
-    lastBipAt = t;
-    const parity = identifyBipParity();
-    bipBuffer.push({ t: tInterp, parity });
-    bipBuffer = bipBuffer.filter(b => t - b.t < 3000);
-    pulseVUFlash('audio');
-    if (debugMode) debugStats.bips++;
-    prevRms = rms; prevRmsT = t;
-    return;
-  }
-  rmsBaseline = rmsBaseline * 0.95 + rms * 0.05;
-  prevRms = rms; prevRmsT = t;
-}
-
-// V8.1 — Identifie si le bip détecté est plutôt 1000 Hz (pair) ou 500 Hz (impair)
-// fftSize=1024, sampleRate typique 48000Hz → binWidth = ~46.9 Hz
-//   500 Hz → bin ~10-11   (window 400-650 Hz : bins 8-14)
-//   1000 Hz → bin ~21-22  (window 850-1150 Hz : bins 18-25)
-function identifyBipParity(){
-  if (!analyserNode || !audioFreqBuf) return 'unknown';
-  analyserNode.getByteFrequencyData(audioFreqBuf);
-  const sr = audioCtx.sampleRate || 48000;
-  const binHz = sr / analyserNode.fftSize;
-  const binAt = hz => Math.round(hz / binHz);
-  let sumOdd = 0, sumEven = 0;
-  for (let i = binAt(400); i <= binAt(650); i++) sumOdd += audioFreqBuf[i] || 0;
-  for (let i = binAt(850); i <= binAt(1150); i++) sumEven += audioFreqBuf[i] || 0;
-  if (sumEven < 50 && sumOdd < 50) return 'unknown'; // signal trop faible pour conclure
-  return sumEven > sumOdd ? 'even' : 'odd';
-}
-
-function tryMatchAndRecord(now){
-  for (let f of pendingFlashes) {
-    if (f.matched) continue;
-    if (now - f.t < FLASH_MATCH_DELAY_MS) continue; // pas assez de patience pour avoir vu le bip
-    f.matched = true;
-
-    let bestBip = null;
-    let bestDelta = null;
-    for (let bip of bipBuffer) {
-      const delta = bip.t - f.t; // + = bip après flash = son en retard
-      if (Math.abs(delta) > MATCH_WINDOW_MS) continue;
-      if (bestDelta === null || Math.abs(delta) < Math.abs(bestDelta)) {
-        bestDelta = delta;
-        bestBip = bip;
-      }
-    }
-
-    if (bestDelta !== null) {
-      measurements.push({ deltaMs: bestDelta, bipParity: bestBip.parity });
-      debugStats.lastDelta = bestDelta;
-      document.getElementById('az-pass-num').textContent = measurements.length;
-      const pct = Math.min(100, 100 * measurements.length / analyzerPassesTarget);
-      document.getElementById('az-progress-fill').style.width = pct + '%';
-
-      if (measurements.length >= analyzerPassesTarget) {
-        finishAnalyzer();
-        return;
-      }
-    }
-  }
-  pendingFlashes = pendingFlashes.filter(f => now - f.t < 3000);
-}
-
-// VU helpers
-function updateVU(videoNorm, audioNorm){
-  document.getElementById('az-vu-video').style.width = (videoNorm*100).toFixed(1) + '%';
-  document.getElementById('az-vu-audio').style.width = (audioNorm*100).toFixed(1) + '%';
-}
-
-// V8.1.1/V8.1.3 — Debug display
-function updateDebugDisplay(){
-  // V8.1.3 — Cam fps + Audio sample rate (statique, init au démarrage de la mesure)
-  document.getElementById('dbg-cam-fps').textContent =
-    debugStats.camFps ? debugStats.camFps.toFixed(0) + ' fps' : '—';
-  document.getElementById('dbg-audio-sr').textContent =
-    debugStats.audioSr ? (debugStats.audioSr/1000).toFixed(1) + ' kHz' : '—';
-  const lumEl = document.getElementById('dbg-lum');
-  const lumThrEl = document.getElementById('dbg-lum-thr');
-  const rmsEl = document.getElementById('dbg-rms');
-  const rmsThrEl = document.getElementById('dbg-rms-thr');
-  lumEl.textContent = debugStats.lum.toFixed(0);
-  lumEl.className = 'v ' + (debugStats.lum > debugStats.lumThr ? 'ok' : '');
-  lumThrEl.textContent = debugStats.lumThr.toFixed(0);
-  rmsEl.textContent = debugStats.rms.toFixed(3);
-  rmsEl.className = 'v ' + (debugStats.rms > debugStats.rmsThr ? 'ok' : '');
-  rmsThrEl.textContent = debugStats.rmsThr.toFixed(3);
-  document.getElementById('dbg-flashes').textContent = debugStats.flashes;
-  document.getElementById('dbg-bips').textContent = debugStats.bips;
-  document.getElementById('dbg-last-delta').textContent =
-    debugStats.lastDelta == null ? '—' :
-    (debugStats.lastDelta >= 0 ? '+' : '') + debugStats.lastDelta.toFixed(0) + ' ms';
-}
-let vuFlashTimers = { video: null, audio: null };
-function pulseVUFlash(kind){
-  const el = document.getElementById(kind === 'video' ? 'az-vu-flash' : 'az-vu-bip');
-  if (!el) return;
-  el.classList.add('active');
-  clearTimeout(vuFlashTimers[kind]);
-  vuFlashTimers[kind] = setTimeout(() => el.classList.remove('active'), 200);
-}
-
 function abortAnalyzer(silent){
-  if (analyzerState === 'idle') return;
-  analyzerState = 'idle';
-  if (analyzerRafId) cancelAnimationFrame(analyzerRafId);
-  stopAnalyzerStreams();
-  if (!silent) showScreen('home-mode');
+  ana.token++;stopAnalyzer();ana.state='idle';
+  if(!silent){refreshSetup();showScreen('analyzer-setup');}
+}
+function anaLoop(){
+  if(ana.state!=='running')return;
+  const now=performance.now(),v=ana.video;
+  if(!ana.videoReadyAt&&v&&v.readyState>=2&&v.videoWidth>0)ana.videoReadyAt=now;
+  if(ana.rvfc&&!ana.rvfcDead&&ana.videoReadyAt&&ana.rvfcCount===0&&now-ana.videoReadyAt>1200)ana.rvfcDead=true;
+  if(!ana.rvfc||ana.rvfcDead)pollVideo(now);
+  if(ana.mutedAt&&now-ana.mutedAt>2500){
+    anaFail(ana.token,'La caméra ou le micro a été mis en pause par le système (appel, Siri, autre application). Relance la mesure.');return;
+  }
+  // Bascule (une fois) sur le détecteur de secours : le micro ne livre rien, ou bien du son arrive et des flashs
+  // sont vus mais aucun bip n'est jamais reconnu (son haché par l'AudioWorklet sur certains iOS)
+  const silent=!ana.lastLvlAt&&now-ana.t0>2500;
+  // (« sourd » : à peu près un son rejeté par flash, et non quelques bruits ambiants)
+  const deaf=ana.bips.length===0&&ana.flashes.length>=5&&ana.noise>=0.7*ana.flashes.length&&now-ana.t0>8000;
+  if(!ana.triedScript&&ana.audioMode==='worklet'&&!audioPaused()&&(silent||deaf)){
+    ana.triedScript=true;dropDetector();
+    try{const n=makeScriptDetector(ana.token);ana.det=n;ana.audioMode='script';ana.src.connect(n);n.connect(ana.mute);}catch(e){}
+  }
+  updateRunUI(now);
+  if(ana.state==='running')ana.raf=requestAnimationFrame(anaLoop);
 }
 
-function stopAnalyzerStreams(){
-  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-  if (audioStream) { audioStream.getTracks().forEach(t => t.stop()); audioStream = null; }
-  if (analyserNode) { try { analyserNode.disconnect(); } catch(e){} analyserNode = null; }
-  if (micGainNode) { try { micGainNode.disconnect(); } catch(e){} micGainNode = null; }
-  if (micSourceNode) { try { micSourceNode.disconnect(); } catch(e){} micSourceNode = null; }
-  if (videoEl) { try { videoEl.srcObject = null; } catch(e){} }
+// ---------- Affichage pendant la mesure ----------
+const NO_LOCK_TIMEOUT_MS = 45000;   // flash et bip reçus mais jamais associés : on arrête au lieu de tourner sans fin
+const NO_SIGNAL_TIMEOUT_MS = 120000; // rien d'exploitable du tout
+function setCheck(which,ok,text){
+  const row=$(which==='flash'?'chk-flash':'chk-bip');row.classList.toggle('ok',!!ok);
+  $(which==='flash'?'chk-flash-st':'chk-bip-st').textContent=text;
+}
+let vuFlashTimers={video:null,audio:null};
+function pulseVUFlash(kind){
+  const el=$(kind==='video'?'az-vu-flash':'az-vu-bip');if(!el)return;
+  el.classList.add('active');clearTimeout(vuFlashTimers[kind]);
+  vuFlashTimers[kind]=setTimeout(()=>el.classList.remove('active'),200);
+}
+function dbOf(x){return 20*Math.log10(x+1e-7);}
+const MSG_NO_LOCK='Flash et bip reçus, mais impossibles à associer. Rapproche-toi de l\'enceinte et coupe les autres sons. Si rien ne change : le décalage dépasse 2,5 s, trop grand pour l\'appli.';
+function updateRunUI(now){
+  $('az-vu-video').style.width=(Math.min(1,ana.lum/255)*100).toFixed(1)+'%';
+  $('az-vu-audio').style.width=(Math.max(0,Math.min(1,(dbOf(ana.env)+70)/60))*100).toFixed(1)+'%';
+  if(now-ana.uiAt<150)return;ana.uiAt=now;
+  const el=now-ana.t0,lock=ana.lock,n=lock?lock.pairs.length:0,calib=ana.mode==='calib';
+  const nf=ana.flashes.length,nb=ana.bips.length;
+  const fRecent=nf>0&&now-ana.flashes[nf-1].t<4000,bRecent=nb>0&&now-ana.bips[nb-1].t<4000;
+  setCheck('flash',fRecent,fRecent?'vu ✓':(nf?'perdu':'pas encore vu'));
+  setCheck('bip',bRecent,bRecent?'entendu ✓':(nb?'perdu':'pas encore entendu'));
+  let phase,status,counting=false;
+  if(el<ANA_WARMUP_MS){
+    phase='Préparation…';status='Réglage automatique de la caméra et du micro ('+fr1((ANA_WARMUP_MS-el)/1000)+' s)';
+    ana.searchSince=0;ana.bothSince=0;
+  }else if(n>=MIN_LOCK){
+    counting=true;phase=calib?'Étalonnage en cours':'Mesure en cours';
+    ana.searchSince=0;ana.bothSince=0;
+    if(!(fRecent&&bRecent))status='Signal perdu : vise de nouveau l\'écran et reste près du son';
+    else if((lock.ambiguous&&lock.kind==='double')||(ana.second>=3&&ana.second>=0.5*n))status='Deux sons par flash : cet appareil entend aussi le Générateur en direct. Éloigne-le.';
+    else if(lock.ambiguous)status='Le Générateur n\'émet pas le bon signal : choisis « Signal de mesure ».';
+    else status='Ne bouge plus';
+    // accroché puis plus rien du tout pendant 2 minutes : on rend la main
+    if(!fRecent&&!bRecent&&nf&&now-ana.flashes[nf-1].t>NO_SIGNAL_TIMEOUT_MS){anaFail(ana.token,'Signal perdu depuis 2 minutes. Relance la mesure.');return;}
+  }else{
+    if(!ana.searchSince)ana.searchSince=now;
+    const w=now-ana.searchSince;
+    // wb : depuis combien de temps flash ET bip arrivent tous les deux sans s'associer
+    // (et non depuis le début : on peut lancer « Mesurer » bien avant de mettre le Générateur en route)
+    if(fRecent&&bRecent){if(!ana.bothSince)ana.bothSince=now;}else ana.bothSince=0;
+    const wb=ana.bothSince?now-ana.bothSince:0;
+    phase='Recherche du signal…';
+    if(audioPaused())status='Le son est en pause : touche l\'écran pour le réactiver.';
+    else if(!ana.lastLvlAt&&el>ANA_WARMUP_MS+2500)status='Le micro n\'envoie aucun son : vérifie la source de son (bouton « Source »).';
+    else if(w<3500&&!(fRecent&&bRecent))status=calib?'Vise directement l\'écran du Générateur (~30 cm), pas le moniteur de la chaîne':'Vise le moniteur qui affiche le signal de mesure';
+    else if(!fRecent&&!bRecent)status='Ni flash ni bip : lance « Signal de mesure » sur le Générateur et vérifie qu\'il arrive jusqu\'ici (ou change de source avec « Source »).';
+    else if(!fRecent)status='Bip entendu, mais aucun flash : cadre l\'écran, il doit bien se détacher dans l\'image (ou vérifie la source d\'image avec « Source »).';
+    else if(!bRecent)status='Flash vu, mais aucun bip : monte le volume ou rapproche-toi de l\'enceinte (ou vérifie la source de son avec « Source »).';
+    else if(wb>14000){phase='Signal non reconnu';status=MSG_NO_LOCK;}
+    else status='Flash et bip repérés, encore quelques secondes… Ne bouge plus.';
+    // pas d'attente sans fin, caméra allumée : on rend la main avec l'explication
+    if(wb>NO_LOCK_TIMEOUT_MS){anaFail(ana.token,MSG_NO_LOCK);return;}
+    if(w>NO_SIGNAL_TIMEOUT_MS){anaFail(ana.token,'Aucune mesure possible en 2 minutes. '+status);return;}
+  }
+  $('az-phase').textContent=phase;$('az-status').textContent=status;
+  $('az-count').hidden=!counting;$('az-checks').hidden=counting;$('az-bar').hidden=!counting;
+  $('az-pass-num').textContent=Math.min(n,ana.target);
+  $('az-progress-fill').style.width=(counting?Math.min(100,100*n/ana.target):0)+'%';
+  if(prefs.debug&&!ana.panelOpen)updateDebug(now);
+}
+function updateDebug(now){
+  const fd=ana.fd,iv=fd&&fd.iv?1000/fd.iv:0;
+  $('dbg-cam').textContent=(iv?iv.toFixed(0)+' i/s':'—')+(ana.videoMode?' · '+ana.videoMode:'');
+  $('dbg-audio').textContent=(audioCtx.sampleRate/1000).toFixed(1)+' kHz'+(ana.audioMode?' · '+ana.audioMode:'')+(ana.voiceProc?' · voix':'');
+  const lumEl=$('dbg-lum'),thr=fd&&fd.lo!==null?fd.thr():0;
+  lumEl.textContent=ana.lum.toFixed(0);lumEl.className='v '+(thr&&ana.lum>thr?'ok':'');
+  $('dbg-lum-thr').textContent=thr?thr.toFixed(0):'—';
+  const envEl=$('dbg-env');
+  envEl.textContent=ana.lastLvlAt?dbOf(ana.env).toFixed(0):'—';envEl.className='v '+(ana.thr&&ana.env>ana.thr?'ok':'');
+  $('dbg-env-thr').textContent=ana.thr?dbOf(ana.thr).toFixed(0):'—';
+  $('dbg-flashes').textContent=ana.flashes.length;$('dbg-bips').textContent=ana.bips.length;
+  $('dbg-noise').textContent=ana.noise;
+  $('dbg-lock').textContent=ana.lock?signed(ana.lock.center)+' · '+ana.lock.pairs.length+(ana.lock.ambiguous?' ?':''):'—';
 }
 
+// ---------- Fin de mesure ----------
+// Calcul du résultat à partir des couples retenus (fonction pure, testée hors navigateur).
+//  endConv   : l'horodatage des images marque la fin de pose ;
+//  cal       : étalonnage de cette source, ou null ;
+//  isMeasure : vrai pour une mesure (reprise possible de la correction de l'étalonnage, étalonnage retiré).
+function summarizePairs(pairs,endConv,cal,isMeasure){
+  const is=integrationStats(pairs);
+  // Correction de pose. En mesure, si la pose est la même qu'à l'étalonnage (même part d'images partielles,
+  // même cadence), on reprend exactement la correction de l'étalonnage : son bruit et son signe s'annulent.
+  let corr=integrationCorr(is,endConv),reused=false;
+  if(isMeasure&&cal&&cal.integ&&cal.integ.n&&typeof cal.corr==='number'){
+    const ci=cal.integ,pb=(is.p*is.n+ci.p*ci.n)/(is.n+ci.n);
+    const sp=Math.sqrt(Math.max(1e-6,pb*(1-pb))*(1/is.n+1/ci.n));
+    if(Math.abs(is.p-ci.p)<=2*sp&&Math.abs(is.T-ci.T)<2){corr=cal.corr;reused=true;}
+  }
+  const vals=pairs.map(p=>p.d-corr),st=robustStats(vals); // flash daté plus tard de corr → (bip − flash) diminue d'autant
+  // Bruit propre de la correction quand elle est estimée sur cette seule session (comptage d'images partielles)
+  let seC=0;
+  if(endConv&&!reused&&is.n&&is.p<0.9){const ps=(is.p*is.n+1)/(is.n+2);seC=(is.T/1.6)*Math.sqrt(ps*(1-ps)/is.n);}
+  const seM=Math.hypot(seOf(st.sigma,st.n),seC);
+  const useCal=!!(isMeasure&&cal);
+  const se=Math.hypot(seM,useCal&&typeof cal.se==='number'?cal.se:0); // l'incertitude de l'étalonnage s'ajoute
+  return{is:is,corr:corr,reused:reused,vals:vals,st:st,seM:seM,se:se,
+    raw:st.median,value:st.median-(useCal?cal.offset:0),quality:qualityOf(se,st.nOutliers/st.n)};
+}
 function finishAnalyzer(){
-  analyzerState = 'finished';
-  if (analyzerRafId) cancelAnimationFrame(analyzerRafId);
-  stopAnalyzerStreams();
-
-  const allDeltas = measurements.map(m => m.deltaMs);
-  const stats = computeRobustStats(allDeltas);
-
-  // V8.1 — Sanity check parité (alternance pair/impair attendue)
-  const parities = measurements.map(m => m.bipParity);
-  const known = parities.filter(p => p !== 'unknown');
-  let parityHealth = 'unknown';
-  if (known.length >= 2) {
-    const evens = known.filter(p => p === 'even').length;
-    const odds = known.filter(p => p === 'odd').length;
-    if (evens > 0 && odds > 0) parityHealth = 'ok';
-    else parityHealth = 'partial';
+  if(ana.state!=='running'||!ana.lock)return;
+  const lock=ana.lock,key=sourceKey(),mode=ana.mode,cal=getCalib(key);
+  const endConv=ana.videoMode==='present'||ana.videoMode==='poll'||IS_WEBKIT;
+  const used=lock.stat||lock.pairs; // couples servant au calcul (tolérance élargie)
+  const R=summarizePairs(used,endConv,cal,mode==='measure'),st=R.st,corr=R.corr,seM=R.seM,is=R.is,vals=R.vals;
+  // Deux sons par flash trop rapprochés pour donner deux décalages distincts : c'est le détecteur de bip qui le voit
+  const dbl=ana.second>=0.5*lock.pairs.length;
+  const ambiguous=lock.ambiguous||dbl,ambKind=dbl?'double':lock.kind;
+  const pars=used.map(p=>p.par).filter(p=>p==='even'||p==='odd');
+  let parity='unknown';
+  if(pars.length>=2)parity=(pars.includes('even')&&pars.includes('odd'))?'ok':'partial';
+  const res={kind:mode,ts:Date.now(),raw:st.median,value:st.median,n:st.n,sigma:st.sigma,se:seM,min:st.min,max:st.max,
+    outliers:st.nOutliers,quality:R.quality,ambiguous:ambiguous,ambKind:ambKind,parity:parity,key:key,
+    source:ana.vLabel+' + '+ana.aLabel,video:ana.videoMode,audio:ana.audioMode,expo:Math.round(corr*10)/10,voiceProc:ana.voiceProc,
+    values:vals.map(v=>Math.round(v*10)/10)};
+  ana.token++;stopAnalyzer();ana.state='idle';
+  prefs.lastKey=key;
+  if(mode==='calib'){
+    let why='';
+    if(ambiguous&&ambKind==='double')why='Deux sons par flash : cet appareil entend aussi un autre haut-parleur';
+    else if(ambiguous)why='Le Générateur n\'émet pas le signal de mesure : choisis « Signal de mesure »';
+    else if(seM>CALIB_MAX_SE)why='Étalonnage trop incertain (± '+Math.round(2*seM)+' ms)';
+    else if(Math.abs(st.median)>CALIB_MAX_ABS)why='Décalage de '+Math.round(Math.abs(st.median))+' ms, trop grand pour deux appareils face à face';
+    res.ok=!why;res.why=why;
+    if(res.ok){const c=getCalibMap();c[key]={offset:st.median,ts:res.ts,n:st.n,sigma:st.sigma,se:seM,integ:is,corr:corr};saveJSON(CALIB_KEY,c);}
+  }else{
+    res.calibrated=!!cal;res.calOffset=cal?cal.offset:0;res.calTs=cal?cal.ts:0;
+    res.otherCal=!cal&&Object.keys(getCalibMap()).length>0; // un étalonnage existe, mais pour une autre source
+    res.value=R.value;res.se=R.se;
+    if(!isWeak(res))prefs.done=true;
   }
-
-  showAnalyzerResult(stats, parityHealth);
+  savePrefs();
+  const h=loadHistory();h.push(res);saveJSON(HIST_KEY,h.slice(-MAX_HISTORY));
+  lastFresh=res;showResult(res);
 }
 
-// V8.1.2 — Stats robustes : médiane (insensible aux outliers) + MAD + filtrage
-function computeRobustStats(arr){
-  const n = arr.length;
-  const sorted = [...arr].sort((a,b) => a - b);
-  const median = n % 2 === 0
-    ? (sorted[n/2 - 1] + sorted[n/2]) / 2
-    : sorted[(n-1)/2];
-
-  // MAD (Median Absolute Deviation) — équivalent robuste de l'écart-type
-  const absDevs = sorted.map(v => Math.abs(v - median)).sort((a,b) => a - b);
-  const mad = n % 2 === 0
-    ? (absDevs[n/2 - 1] + absDevs[n/2]) / 2
-    : absDevs[(n-1)/2];
-  // MAD × 1.4826 ≈ écart-type pour distribution normale
-  const robustStdDev = mad * 1.4826;
-
-  // Filtrage outliers : > 2 × MAD (~95% IC pour distribution normale)
-  const outlierThreshold = Math.max(20, mad * 2); // au moins 20 ms de tolérance
-  const inliers = arr.filter(v => Math.abs(v - median) <= outlierThreshold);
-  const nOutliers = n - inliers.length;
-
-  // Stats sur les inliers seulement
-  const meanFiltered = inliers.reduce((a,b) => a+b, 0) / inliers.length;
-  const min = sorted[0];
-  const max = sorted[n - 1];
-
-  return {
-    n,
-    median,
-    meanFiltered,
-    robustStdDev,
-    min,
-    max,
-    nOutliers,
-    allDeltas: arr
-  };
+// ---------- Résultat ----------
+const UNCAL_DOUBT_MS = 60; // sans étalonnage, sous cet écart, le SENS même du réglage n'est pas sûr
+// Incertitude du résultat (≈ 95 %) et seuil sous lequel on annonce « synchro »
+function uncertaintyOf(res){return Math.max(2,2*(typeof res.se==='number'?res.se:seOf(res.sigma,res.n)));}
+function syncTolOf(res){return Math.min(20,Math.max(SYNC_TOL_MS,uncertaintyOf(res)));}
+function isWeak(res){return res.quality==='faible'||!!res.ambiguous;}
+function weakReason(res){return res.ambiguous?(res.ambKind==='double'?'deux sons par flash':'mauvais signal'):'mesure dispersée';}
+function colorOf(a){return a<40?'var(--green)':(a<80?'var(--orange)':'var(--red)');} // référence EBU R37
+// « son en avance de 85 ms » — pour l'historique et le rappel de la mesure précédente
+function phraseOf(res){
+  const a=Math.abs(res.value),r=Math.round(a);
+  if(isWeak(res))return'peu fiable (environ '+r+' ms)';
+  if(!res.calibrated)return a<UNCAL_DOUBT_MS?'écart d\'environ '+r+' ms, non étalonné':(res.value<0?'son en avance d\'environ ':'son en retard d\'environ ')+Math.round(a/10)*10+' ms';
+  if(r<=syncTolOf(res))return'synchro'+(r?' à '+r+' ms près':'');
+  return(res.value<0?'son en avance de ':'son en retard de ')+r+' ms';
 }
-
-function showAnalyzerResult(stats, parityHealth){
-  showScreen('analyzer-result');
-
-  // V8.1.3 — Sauvegarde session dans historique
-  saveSessionToHistory(stats);
-
-  // V8.1.2 — On affiche la MÉDIANE comme valeur principale (robuste aux outliers)
-  const mainMs = stats.median;
-  const absMs = Math.abs(mainMs);
-  const frames = mainMs / (1000 / analyzerFps);
-
-  // Mention
-  let mention, color;
-  if (absMs < 5) { mention = 'EN SYNC'; color = 'var(--green)'; }
-  else if (mainMs > 0) { mention = 'SON EN RETARD'; }
-  else { mention = 'SON EN AVANCE'; }
-
-  // Couleur EBU R37 @ 25 fps : ±40 ms vert, 40-80 orange, >80 rouge
-  if (absMs < 40) color = 'var(--green)';
-  else if (absMs < 80) color = 'var(--orange)';
-  else color = 'var(--red)';
-
-  // Texte
-  const sign = mainMs >= 0 ? '+' : '−';
-  document.getElementById('result-mention').textContent = mention;
-  document.getElementById('result-mention').style.color = color;
-
-  document.getElementById('result-ms').textContent = `${sign}${absMs.toFixed(0)} ms`;
-  document.getElementById('result-ms').style.color = color;
-
-  const fSign = frames >= 0 ? '+' : '−';
-  document.getElementById('result-frames').textContent =
-    `${fSign}${Math.abs(frames).toFixed(1)} images @ ${analyzerFps} fps`;
-
-  // V8.1.2 — Détail enrichi
-  let parityInfo = '';
-  if (parityHealth === 'ok') parityInfo = ' · Signal OK';
-  else if (parityHealth === 'partial') parityInfo = ' · ⚠ Vérifier signal';
-  else parityInfo = ' · Parité non identifiée';
-
-  const minSign = stats.min >= 0 ? '+' : '−';
-  const maxSign = stats.max >= 0 ? '+' : '−';
-  const outliersStr = stats.nOutliers > 0 ? ` · ${stats.nOutliers} outlier(s) exclu(s)` : '';
-
-  document.getElementById('result-stddev').innerHTML =
-    `Médiane sur ${stats.n} passes · σ ±${stats.robustStdDev.toFixed(1)} ms${outliersStr}<br>` +
-    `Min ${minSign}${Math.abs(stats.min).toFixed(0)} ms · Max ${maxSign}${Math.abs(stats.max).toFixed(0)} ms${parityInfo}`;
-
-  // Pour la barre échelle on utilise la médiane
-  const meanMs = mainMs;
-
-  // Barre échelle : -120 à +120 ms, marqueur sur valeur moyenne
-  // Zones : -120..-80 rouge | -80..-40 orange | -40..+40 vert | +40..+80 orange | +80..+120 rouge
-  const range = 120;
-  const pct = v => 50 + (v / range) * 50;
-  document.getElementById('bar-red-l').style.left = '0%';
-  document.getElementById('bar-red-l').style.width = pct(-80) + '%';
-  document.getElementById('bar-orange-l').style.left = pct(-80) + '%';
-  document.getElementById('bar-orange-l').style.width = (pct(-40) - pct(-80)) + '%';
-  document.getElementById('bar-green').style.left = pct(-40) + '%';
-  document.getElementById('bar-green').style.width = (pct(40) - pct(-40)) + '%';
-  document.getElementById('bar-orange-r').style.left = pct(40) + '%';
-  document.getElementById('bar-orange-r').style.width = (pct(80) - pct(40)) + '%';
-  document.getElementById('bar-red-r').style.left = pct(80) + '%';
-  document.getElementById('bar-red-r').style.width = (100 - pct(80)) + '%';
-
-  const clamped = Math.max(-range, Math.min(range, meanMs));
-  document.getElementById('bar-marker').style.left = pct(clamped) + '%';
-}
-
-function restartAnalyzer(){
-  analyzerState = 'idle';
-  buildAnalyzerSetupUI();
-  showScreen('analyzer-setup');
-}
-
-// ========================================================================
-// V8.1.3 — Historique multi-session (localStorage)
-// ========================================================================
-const HISTORY_KEY = 'syncTestProHistory';
-const MAX_HISTORY = 30;
-let historyOrigin = 'analyzer-setup'; // d'où on est venu pour retour propre
-
-function loadHistory(){
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { return []; }
-}
-
-function saveSessionToHistory(stats){
-  try {
-    const history = loadHistory();
-    history.push({
-      timestamp: Date.now(),
-      median: stats.median,
-      stdDev: stats.robustStdDev,
-      n: stats.n,
-      fps: analyzerFps,
-      min: stats.min,
-      max: stats.max,
-      outliers: stats.nOutliers
-    });
-    const trimmed = history.slice(-MAX_HISTORY);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
-  } catch(e) { /* localStorage plein ou désactivé : on ignore */ }
-}
-
-function clearHistoryConfirm(){
-  if (confirm('Effacer définitivement l\'historique des mesures ?')) {
-    try { localStorage.removeItem(HISTORY_KEY); } catch(e) {}
-    // Re-render sans changer l'origine
-    const history = loadHistory();
-    const content = document.getElementById('hist-content');
-    content.innerHTML = '<div class="hist-empty">Historique effacé.</div>';
+// La consigne. Convention : value = (arrivée du bip) − (arrivée du flash) ; négatif = son en avance.
+//  son en avance → il faut le retarder davantage → AUGMENTER le retard audio
+//  son en retard → il faut le retarder moins     → DIMINUER le retard audio (ou retarder l'image)
+function adviceOf(res){
+  const v=res.value,a=Math.abs(v),r=Math.round(a),cal=!!res.calibrated;
+  const dir=v<0?'son en avance':'son en retard';
+  if(isWeak(res)){
+    if(res.ambiguous&&res.ambKind==='double')return{mention:'MESURE PEU FIABLE',who:'Avant de régler',strong:'Deux sons par flash',weak:true,
+      small:'Cet appareil entend à la fois le Générateur en direct et le son de la chaîne. Éloigne-le du Générateur (ou écoute la chaîne au casque), puis remesure.'};
+    if(res.ambiguous)return{mention:'MESURE PEU FIABLE',who:'Avant de régler',strong:'Mauvais signal côté Générateur',weak:true,
+      small:'Le Générateur n\'émet pas le signal de mesure : choisis « Signal de mesure » (recharge sa page si elle est ancienne), puis remesure. Valeur indicative : '+dir+' d\'environ '+r+' ms.'};
+    return{mention:'MESURE PEU FIABLE',who:'Avant de régler',strong:'Mesure à refaire',weak:true,
+      small:'Pose l\'appareil, cadre bien l\'écran, coupe le bruit autour, puis « Remesurer ». Valeur indicative : '+dir+' d\'environ '+r+' ms.'};
   }
+  if(!cal){
+    // Non étalonnée : le décalage propre des appareils (quelques dizaines de ms) est encore dans la valeur
+    const why=res.otherCal
+      ?'L\'étalonnage enregistré a été fait avec une autre caméra, un autre micro ou un autre mode d\'écoute : refais « Étalonner » avec ces sources.'
+      :'Sans étalonnage, l\'erreur peut atteindre quelques dizaines de ms.';
+    if(a<UNCAL_DOUBT_MS)return{mention:'ÉCART À CONFIRMER',who:'Avant de régler',strong:'Étalonne d\'abord, puis remesure',doubt:true,
+      small:'Écart mesuré : environ '+r+' ms. '+why+' Le sens du réglage n\'est pas sûr.'};
+    const r10=Math.round(a/10)*10;
+    if(v<0)return{mention:'SON EN AVANCE',who:'Pour l\'ingé son',strong:'Augmenter le retard audio d\'environ '+r10+' ms',approx:true,
+      small:'Le son arrive environ '+r10+' ms avant l\'image. Valeur à ajouter au retard (delay) déjà réglé sur la console. Valeur approchée : '+why};
+    return{mention:'SON EN RETARD',who:'Pour l\'ingé son',strong:'Diminuer le retard audio d\'environ '+r10+' ms',approx:true,
+      small:'Le son arrive environ '+r10+' ms après l\'image. Si le retard audio réglé est plus petit : le mettre à 0 et retarder l\'image du reste. Valeur approchée : '+why};
+  }
+  if(r<=syncTolOf(res)){ // on compare la valeur arrondie, celle qui est affichée
+    const unc=uncertaintyOf(res);
+    let small;
+    if(!r)small='Aucun écart mesurable.';
+    else if(r<=unc)small='Écart de '+r+' ms, inférieur à la précision de la mesure (± '+Math.round(unc)+' ms). Ne touche à rien.';
+    else small='Écart de '+r+' ms ('+dir+'), trop faible pour se voir. Réglage fin facultatif : '+(v<0?'augmenter':'diminuer')+' le retard audio de '+r+' ms.';
+    return{mention:'SYNCHRO',who:'Pour l\'ingé son',strong:'C\'est bon, rien à régler',small:small};
+  }
+  if(v<0)return{mention:'SON EN AVANCE',who:'Pour l\'ingé son',strong:'Augmenter le retard audio de '+r+' ms',
+    small:'Le son arrive '+r+' ms avant l\'image. Valeur à ajouter au retard (delay) déjà réglé sur la console.'};
+  return{mention:'SON EN RETARD',who:'Pour l\'ingé son',strong:'Diminuer le retard audio de '+r+' ms',
+    small:'Le son arrive '+r+' ms après l\'image. Si le retard audio réglé est plus petit que '+r+' ms : le mettre à 0 et retarder l\'image du reste.'};
 }
-
-function historyBack(){
-  showScreen(historyOrigin || 'analyzer-setup');
+function renderFrames(){
+  const res=lastResult;if(!res||res.kind!=='measure')return;
+  const n=Math.abs(res.value)/(1000/prefs.fps);
+  $('result-frames').textContent='≈ '+fr1(n)+' image'+(n>=2?'s':'')+' à';
+  const sel=$('result-fps');
+  if(!sel.options.length)RESULT_FPS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o);});
+  sel.value=String(prefs.fps);
 }
-
-function computeSuperMedian(history){
-  if (history.length === 0) return null;
-  const medians = history.map(h => h.median).sort((a,b) => a-b);
-  const n = medians.length;
-  const superMedian = n % 2 === 0
-    ? (medians[n/2 - 1] + medians[n/2]) / 2
-    : medians[(n-1)/2];
-  // Écart-type des médianes inter-session
-  const mean = medians.reduce((a,b) => a+b, 0) / n;
-  const variance = medians.reduce((acc,v) => acc + Math.pow(v - mean, 2), 0) / n;
-  const stdDev = Math.sqrt(variance);
-  return { superMedian, stdDev, n, mean, min: medians[0], max: medians[n-1] };
+function onFpsChange(){
+  const f=parseFloat($('result-fps').value);
+  if(RESULT_FPS.includes(f)){prefs.fps=f;savePrefs();renderFrames();}
 }
-
-function showAnalyzerHistory(){
-  // Mémorise l'origine pour un retour propre
-  const activeScreen = document.querySelector('.screen.active');
-  if (activeScreen) historyOrigin = activeScreen.id;
-  showScreen('analyzer-history');
-  const history = loadHistory();
-  const content = document.getElementById('hist-content');
-
-  if (history.length === 0) {
-    content.innerHTML = '<div class="hist-empty">Aucune mesure enregistrée pour l\'instant.<br>Effectue une mesure pour démarrer l\'historique.</div>';
+// fromHist : le résultat est rouvert depuis l'historique (on affiche sa date, pas de « et maintenant »)
+function showResult(res,fromHist){
+  lastResult=res;resultFromHistory=!!fromHist;
+  showScreen('analyzer-result');$('analyzer-result').scrollTop=0;
+  const tag=$('result-tag'),men=$('result-mention'),ms=$('result-ms'),act=$('result-action'),det=$('result-detail');
+  const q=$('result-quality'),more=$('result-more-body'),P=$('result-primary'),S=$('result-secondary'),warn=$('result-warn');
+  const card=o=>'<span class="who">'+esc(o.who)+'</span><b>'+esc(o.strong)+'</b><small>'+esc(o.small)+'</small>';
+  const setWarn=html=>{warn.innerHTML=html||'';warn.hidden=!html;};
+  // mesures antérieures à celle affichée
+  const hist=loadHistory(),idx=hist.findIndex(h=>h&&h.ts===res.ts&&h.kind===res.kind);
+  const before=(idx>=0?hist.slice(0,idx):hist).slice().reverse();
+  $('result-more').open=false;setWarn('');
+  const when=fromHist?' du '+dateStr(res.ts):'';
+  if(res.kind==='calib'){
+    const r=Math.round(Math.abs(res.raw));
+    // même valeur que la dernière mesure non étalonnée : l'étalonnage a peut-être été fait à travers la chaîne
+    const lastM=before.find(h=>h&&h.kind==='measure');
+    const suspect=!fromHist&&res.ok&&lastM&&lastM.key===res.key&&res.ts-lastM.ts<10*60000&&Math.abs(lastM.raw-res.raw)<=20;
+    tag.textContent='Étalonnage'+when;tag.className='az-result-tag';
+    men.textContent=!res.ok?'ÉTALONNAGE REFUSÉ':(suspect?'ÉTALONNAGE À VÉRIFIER':'✓ ÉTALONNAGE ENREGISTRÉ');
+    men.style.color=(res.ok&&!suspect)?'var(--green)':'var(--orange)';
+    ms.hidden=true;$('result-frames-row').hidden=true;$('result-legend').hidden=true;q.hidden=true;$('result-copy').hidden=true;
+    act.className='az-action-card'+(res.ok?'':' weak');
+    // Le chiffre n'est pas une consigne : il reste en petit, pour qu'il ne parte pas chez l'ingé son
+    if(fromHist)act.innerHTML=card({who:'Étalonnage'+when,strong:res.ok?'Étalonnage enregistré':'Étalonnage refusé',
+      small:res.ok?'Décalage propre des appareils : '+r+' ms.':(res.why||'')});
+    else if(res.ok)act.innerHTML=card({who:'Et maintenant',strong:'Installe le Générateur devant la caméra et le micro de la chaîne',
+      small:'Puis appuie sur « Mesurer la chaîne ». Décalage propre des appareils : '+r+' ms ; il sera retiré de chaque mesure. Rien à régler sur la console.'});
+    else act.innerHTML=card({who:'À refaire',strong:res.why||'Étalonnage non enregistré',small:'Place les deux appareils face à face (~30 cm), immobiles, volume au maximum, puis recommence.'});
+    if(suspect)setWarn('<b>Même valeur que ta dernière mesure</b> : cet étalonnage a peut-être été fait à travers la chaîne. Si les deux appareils n\'étaient pas face à face, refais-le.');
+    det.innerHTML=res.n+' flashs mesurés';
+    more.innerHTML='Valeur mesurée '+signed(res.raw)+' · convention : + = son en retard<br>Dispersion flash à flash : ± '+Math.round(res.sigma)+' ms<br>Source : '+esc(res.source||'—');
+    if(fromHist){P.textContent='← Historique';P.onclick=showAnalyzerHistory;S.textContent='← Analyseur';S.onclick=backToAnalyzerSetup;}
+    else if(res.ok&&!suspect){P.textContent='▶ Mesurer la chaîne';P.onclick=()=>startAnalyzer('measure');S.textContent='↻ Refaire l\'étalonnage';S.onclick=askCalib;}
+    else if(res.ok){P.textContent='↻ Refaire l\'étalonnage';P.onclick=askCalib;S.textContent='▶ Mesurer la chaîne';S.onclick=()=>startAnalyzer('measure');}
+    else{P.textContent='↻ Refaire l\'étalonnage';P.onclick=()=>startAnalyzer('calib');S.textContent='← Analyseur';S.onclick=backToAnalyzerSetup;}
     return;
   }
-
-  const sm = computeSuperMedian(history);
-  const absMs = Math.abs(sm.superMedian);
-  let color = 'var(--green)';
-  if (absMs >= 80) color = 'var(--red)';
-  else if (absMs >= 40) color = 'var(--orange)';
-
-  const sign = sm.superMedian >= 0 ? '+' : '−';
-  const dispersionLabel = sm.stdDev < 10 ? 'Stable' : (sm.stdDev < 30 ? 'Modéré' : 'Variable');
-
-  let html = `
-    <div class="hist-summary">
-      <div class="label">Super-médiane sur ${sm.n} session${sm.n>1?'s':''}</div>
-      <div class="val" style="color:${color}">${sign}${absMs.toFixed(0)} ms</div>
-      <div class="detail">
-        σ inter-session : ±${sm.stdDev.toFixed(1)} ms · <strong>${dispersionLabel}</strong><br>
-        Min ${sm.min >= 0 ? '+' : '−'}${Math.abs(sm.min).toFixed(0)} ms · Max ${sm.max >= 0 ? '+' : '−'}${Math.abs(sm.max).toFixed(0)} ms
-      </div>
-    </div>
-    <div class="hist-list">
-      <div class="label">Sessions récentes (${history.length})</div>`;
-
-  // Affiche les plus récentes en haut
-  for (let i = history.length - 1; i >= 0; i--) {
-    const h = history[i];
-    const d = new Date(h.timestamp);
-    const dateStr = d.toLocaleString('fr-FR', {
-      day: '2-digit', month: '2-digit',
-      hour: '2-digit', minute: '2-digit'
-    });
-    const sgn = h.median >= 0 ? '+' : '−';
-    html += `
-      <div class="hist-item">
-        <div>
-          <div class="date">${dateStr}</div>
-          <div class="meta">${h.n} passes · ${h.fps} fps${h.outliers ? ` · ${h.outliers} excl.` : ''}</div>
-        </div>
-        <div>
-          <div class="ms">${sgn}${Math.abs(h.median).toFixed(0)} ms</div>
-          <div class="meta" style="text-align:right">σ ±${h.stdDev.toFixed(0)} ms</div>
-        </div>
-      </div>`;
+  const v=res.value,a=Math.abs(v),r=Math.round(a),adv=adviceOf(res),weak=!!adv.weak,grey=weak||!!adv.doubt;
+  const col=grey?'var(--orange)':colorOf(a);
+  tag.textContent='Mesure'+when+(res.calibrated?' · étalonnée':' · non étalonnée');
+  tag.className='az-result-tag '+(res.calibrated?'cal':'raw');
+  men.textContent=adv.mention;men.style.color=col;
+  ms.hidden=false;ms.textContent=res.calibrated?r+' ms':'≈ '+(a<UNCAL_DOUBT_MS?r:Math.round(a/10)*10)+' ms';
+  ms.style.color=col;ms.classList.toggle('weak',grey);
+  act.className='az-action-card'+(grey?' weak':'');act.innerHTML=card(adv);
+  $('result-frames-row').hidden=grey;$('result-legend').hidden=grey;$('result-copy').hidden=false;
+  renderFrames();
+  // une seule indication de fiabilité, cohérente avec la carte
+  q.hidden=false;
+  if(weak){q.className='az-quality q-faible';q.textContent='Fiabilité : faible — '+weakReason(res);}
+  else if(!res.calibrated){q.className='az-quality q-moyenne';q.textContent='Précision : ± quelques dizaines de ms (non étalonnée)';}
+  else{q.className='az-quality q-'+res.quality;q.textContent='Fiabilité : '+res.quality+' (± '+Math.round(uncertaintyOf(res))+' ms)';}
+  let d=res.n+' flashs mesurés';
+  if(res.outliers)d+=' (dont '+res.outliers+' très différent'+(res.outliers>1?'s':'')+' des autres)';
+  const prev=before.find(h=>h&&h.kind==='measure'&&h.key===res.key&&res.ts-h.ts<SERIES_GAP_MS);
+  if(prev){
+    d+='<br>Mesure précédente ('+esc(timeStr(prev.ts))+') : '+esc(phraseOf(prev));
+    // l'écart a grandi, dans le même sens, de plus que l'incertitude des deux mesures : le réglage est sans doute parti à l'envers
+    const grow=a-Math.abs(prev.value);
+    if(!fromHist&&!grey&&!isWeak(prev)&&res.calTs===prev.calTs&&prev.value*v>0&&grow>Math.max(10,uncertaintyOf(res)+uncertaintyOf(prev)))
+      setWarn('<b>L\'écart est passé de '+Math.round(Math.abs(prev.value))+' à '+r+' ms</b> depuis '+esc(timeStr(prev.ts))+'. Si un réglage vient d\'être fait, il est parti dans le mauvais sens.');
   }
-  html += '</div>';
-  content.innerHTML = html;
+  const serie=currentSeries(idx>=0?hist.slice(0,idx+1):hist);
+  if(serie.length>=2)d+='<br>'+serie.length+' mesures concordantes à la suite : '+Math.round(Math.abs(medianOf(serie.map(x=>x.value))))+' ms';
+  det.innerHTML=d;
+  let m=(res.calibrated
+    ?'Valeur mesurée '+signed(res.raw)+' − étalonnage '+signed(res.calOffset)+' (du '+esc(dateStr(res.calTs))+')'
+    :'Valeur mesurée '+signed(res.raw)+', non corrigée')+' · convention : + = son en retard';
+  m+='<br>Dispersion flash à flash : ± '+Math.round(res.sigma)+' ms';
+  m+='<br>Source : '+esc(res.source||'—');
+  if(res.video)m+='<br>Horodatage image : '+esc(res.video)+' · son : '+esc(res.audio||'—')+(res.expo?' · correction de pose '+fr1(res.expo)+' ms':'');
+  if(res.voiceProc)m+='<br>Le traitement de la voix de ce micro n\'a pas pu être coupé : précision réduite.';
+  if(res.parity==='partial')m+='<br>Un seul des deux bips (aigu 1000 Hz / grave 500 Hz) a été reconnu : le son est peut-être filtré.';
+  more.innerHTML=m;
+  if(fromHist){P.textContent='← Historique';P.onclick=showAnalyzerHistory;S.textContent='← Analyseur';S.onclick=backToAnalyzerSetup;}
+  else if(adv.doubt){P.textContent='◎ Étalonner';P.onclick=askCalib;S.textContent='↻ Remesurer';S.onclick=()=>startAnalyzer('measure');}
+  else{
+    P.textContent='↻ Remesurer';P.onclick=()=>startAnalyzer('measure');
+    if(res.calibrated){S.textContent='← Analyseur';S.onclick=backToAnalyzerSetup;}
+    else{S.textContent='◎ Étalonner';S.onclick=askCalib;}
+  }
+}
+function resultText(res){
+  const adv=adviceOf(res),n=Math.abs(res.value)/(1000/prefs.fps);
+  return'Sync Test Pro · '+dateStr(res.ts)+'\n'+adv.strong+'.\n'+adv.small+'\n'+
+    '≈ '+fr1(n)+' image'+(n>=2?'s':'')+' à '+prefs.fps+' i/s · '+res.n+' flashs mesurés · '+
+    (res.calibrated?'incertitude ± '+Math.round(uncertaintyOf(res))+' ms · mesure étalonnée':'mesure non étalonnée (± quelques dizaines de ms)');
+}
+// Partage (feuille de partage du téléphone) quand il existe, sinon copie dans le presse-papiers
+const SHARE_LABEL=(typeof navigator.share==='function')?'Partager':'Copier';
+function shareResult(){
+  const res=lastResult;if(!res||res.kind!=='measure')return;
+  const txt=resultText(res),btn=$('result-copy');
+  const done=ok=>{btn.textContent=ok?'Copié ✓':'Copie impossible';setTimeout(()=>{btn.textContent=SHARE_LABEL;},1800);};
+  const fallback=()=>{
+    try{const ta=document.createElement('textarea');ta.value=txt;ta.setAttribute('readonly','');
+      ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+      const ok=document.execCommand('copy');document.body.removeChild(ta);done(ok);}catch(e){done(false);}
+  };
+  const copy=()=>{
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>done(true),fallback);
+    else fallback();
+  };
+  if(typeof navigator.share==='function'){
+    try{navigator.share({text:txt}).catch(e=>{if(!e||e.name!=='AbortError')copy();});}catch(e){copy();}
+  }else copy();
 }
 
-function showAnalyzerError(htmlMsg){
-  analyzerState = 'error';
-  stopAnalyzerStreams();
-  // On affiche dans l'écran setup
-  showScreen('analyzer-setup');
-  // Insère un message d'erreur en haut de l'écran setup
-  let existing = document.getElementById('az-error-msg');
-  if (existing) existing.remove();
-  const errDiv = document.createElement('div');
-  errDiv.id = 'az-error-msg';
-  errDiv.className = 'az-error';
-  errDiv.innerHTML = htmlMsg;
-  const setup = document.getElementById('analyzer-setup');
-  setup.insertBefore(errDiv, setup.children[1]);
-  setTimeout(() => {
-    if (errDiv.parentNode) errDiv.remove();
-  }, 12000);
+// ---------- Historique ----------
+let historyOrigin='analyzer-setup';
+function loadHistory(){const h=loadJSON(HIST_KEY,[]);return Array.isArray(h)?h:[];}
+// Série = mesures consécutives les plus récentes, même source, même étalonnage, concordantes
+function currentSeries(hist){
+  const out=[];
+  for(let i=hist.length-1;i>=0;i--){
+    const h=hist[i];
+    if(!h||h.kind!=='measure'||typeof h.value!=='number'||isWeak(h))break;
+    if(out.length){
+      const ref=out[0];
+      if(h.key!==ref.key||h.calTs!==ref.calTs||out[out.length-1].ts-h.ts>SERIES_GAP_MS)break;
+      // « concordantes » = compatibles avec l'incertitude des mesures (et non ±20 ms, plus large qu'un réglage de console)
+      const tol=Math.max(6,2.5*Math.hypot(h.se||3,ref.se||3));
+      if(Math.abs(h.value-medianOf(out.map(o=>o.value)))>tol)break;
+    }
+    out.push(h);
+  }
+  return out;
 }
+function showAnalyzerHistory(){
+  const act=document.querySelector('.screen.active');
+  // on retient d'où l'on vient, sauf si c'est un résultat lui-même rouvert depuis l'historique
+  if(act&&act.id!=='analyzer-history'&&!(act.id==='analyzer-result'&&resultFromHistory))historyOrigin=act.id;
+  showScreen('analyzer-history');$('analyzer-history').scrollTop=0;
+  const hist=loadHistory(),content=$('hist-content');
+  $('hist-clear').hidden=!hist.length;
+  if(!hist.length){
+    content.innerHTML='<div class="hist-empty">Aucune mesure enregistrée pour l\'instant.</div>';return;
+  }
+  let html='';
+  const serie=currentSeries(hist);
+  if(serie.length){
+    const vals=serie.map(s=>s.value),lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals);
+    const ref=Object.assign({},serie[0],{value:medianOf(vals)}),adv=adviceOf(ref),a=Math.abs(ref.value);
+    const range=lo*hi>0?'entre '+Math.round(Math.min(Math.abs(lo),Math.abs(hi)))+' et '+Math.round(Math.max(Math.abs(lo),Math.abs(hi)))+' ms':'de '+signed(lo)+' à '+signed(hi);
+    html+='<div class="hist-summary"><div class="label">'+(serie.length>1?'Sur '+serie.length+' mesures concordantes':'Dernière mesure')+'</div>'+
+      '<div class="val" style="color:'+(adv.doubt?'var(--orange)':colorOf(a))+'">'+(serie[0].calibrated?Math.round(a):'≈ '+(a<UNCAL_DOUBT_MS?Math.round(a):Math.round(a/10)*10))+' ms</div>'+
+      '<div class="detail"><strong>'+esc(adv.strong)+'</strong>'+(serie.length>1?'<br>'+range:'')+
+      '<br>'+(serie[0].calibrated?'mesure étalonnée':'mesure non étalonnée')+'</div></div>';
+  }
+  html+='<div class="hist-list"><div class="label">Mesures ('+hist.length+') — touche une ligne pour la rouvrir</div>';
+  for(let i=hist.length-1;i>=0;i--){
+    const h=hist[i];if(!h)continue;
+    const isCal=h.kind==='calib';
+    let big,sub;
+    if(isCal){big=h.ok?'étalonnage ✓':'étalonnage refusé';sub=h.ok?'décalage propre '+Math.round(Math.abs(h.raw))+' ms':'';}
+    else{
+      const a=Math.abs(h.value);
+      big=(h.calibrated?'':'≈ ')+Math.round(a)+' ms';
+      const word=isWeak(h)?'peu fiable':(!h.calibrated&&a<UNCAL_DOUBT_MS?'à confirmer':(h.calibrated&&Math.round(a)<=syncTolOf(h)?'synchro':(h.value<0?'son en avance':'son en retard')));
+      sub=word+' · '+(h.calibrated?'étalonnée':'non étalonnée');
+    }
+    html+='<div class="hist-item'+(isCal?' calib':'')+'" onclick="openHistory('+i+')"><div><div class="date">'+esc(dateStr(h.ts))+'</div>'+
+      '<div class="meta">'+h.n+' flashs</div></div>'+
+      '<div style="text-align:right"><div class="ms">'+big+'</div><div class="tag">'+sub+'</div></div></div>';
+  }
+  html+='</div>';
+  content.innerHTML=html;
+}
+function openHistory(i){const h=loadHistory()[i];if(h)showResult(h,true);}
+function clearHistoryConfirm(){
+  if(confirm('Effacer définitivement l\'historique des mesures ? (L\'étalonnage est conservé.)')){
+    try{localStorage.removeItem(HIST_KEY);}catch(e){}
+    $('hist-content').innerHTML='<div class="hist-empty">Historique effacé.</div>';$('hist-clear').hidden=true;
+  }
+}
+function historyBack(){
+  if(historyOrigin==='analyzer-result'&&lastFresh)showResult(lastFresh,false);
+  else backToAnalyzerSetup();
+}
+
+// ========== ARRIÈRE-PLAN ==========
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){
+    if(ana.state==='running'){
+      ana.token++;stopAnalyzer();ana.state='idle';
+      showAnaError('Mesure interrompue : l\'appli est passée en arrière-plan. Relance la mesure.');
+      refreshSetup();showScreen('analyzer-setup');
+    }
+  }else{
+    clkReset();
+    if(audioCtx)ensureAudio();                    // hors geste : sans effet si iOS exige un toucher (l'écran le dit alors)
+    if(appMode==='gen')activateMediaSession();
+    if(playing)keepAwake(true);
+  }
+});
 
 // ========== EMPÊCHE SCROLL SUR ÉCRANS PLEINS ==========
 document.addEventListener('touchmove',function(e){
-  const p=document.getElementById('player'),c=document.getElementById('countdown'),a=document.getElementById('analyzer-run');
+  const p=$('player'),c=$('countdown'),a=$('analyzer-run');
   if(p.classList.contains('active')||c.classList.contains('active')||a.classList.contains('active'))e.preventDefault();
 },{passive:false});
 
+// ========== ACCÈS POUR LE BANC D'ESSAI (lecture seule, sans effet sur l'usage normal) ==========
+window.SyncTestPro={
+  version:APP_VERSION,force:TEST,
+  get state(){return ana.state;},
+  get last(){return lastFresh;},
+  get live(){return{flashes:ana.flashes.length,bips:ana.bips.length,noise:ana.noise,frames:ana.frames,
+    lock:ana.lock?{center:ana.lock.center,n:ana.lock.pairs.length,ambiguous:ana.lock.ambiguous}:null,
+    video:ana.videoMode,audio:ana.audioMode,lum:ana.lum,env:ana.env,nf:ana.nf,
+    clock:clk.off,refreshMs:refreshMs,outLatency:outLatency(),mediaSession:mediaSessionActive,mode:appMode,playing:playing,
+    paused:audioPaused(),voiceProc:ana.voiceProc,target:ana.target};},
+  parts:{BipDetector:BipDetector,FlashDetector:FlashDetector,findLock:findLock,robustStats:robustStats,
+    integrationStats:integrationStats,integrationCorr:integrationCorr,summarizePairs:summarizePairs,LIN:LIN,seOf:seOf,qualityOf:qualityOf,
+    adviceOf:adviceOf,mes:mes,mesBuildIntervals:mesBuildIntervals}
+};
+
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded',()=>{
-  drawThumbs();
-  buildAnalyzerSetupUI();
+  $('app-version').textContent='v'+APP_VERSION;
+  $('result-copy').textContent=SHARE_LABEL;
+  drawThumbs();drawThumbMesure();
+  const sa=$('silent-audio');if(sa)sa.addEventListener('pause',()=>{mediaSessionActive=false;});
+  refreshSetup();
+  requestAnimationFrame(heartbeat);
+  // Échantillonnage supplémentaire de l'horloge, à un rythme sans rapport avec l'écran : si les paquets audio
+  // duraient exactement un rafraîchissement, le seul rAF lirait toujours l'horloge au même endroit du paquet.
+  setInterval(clkSample,23);
 });
 </script>
 </body>
