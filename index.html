@@ -664,6 +664,14 @@ button { font-family: var(--mono); }
 .az-warn { font-size: 12px; }
 .az-warn b { color: #fff; }
 .az-error .az-link { color: var(--red); }
+
+/* ===== V9.1 — choix de la source ===== */
+.az-seg { display: flex; gap: 8px; }
+.az-seg button {
+  flex: 1; min-height: 52px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text2); font-size: 11px; line-height: 1.4; padding: 8px 10px; cursor: pointer;
+}
+.az-seg button.active { color: var(--accent); border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.08); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -770,6 +778,14 @@ button { font-family: var(--mono); }
   <div class="az-section" id="az-error-slot" hidden></div>
 
   <div class="az-section">
+    <div class="label">L'Analyseur regarde et écoute</div>
+    <div class="az-seg">
+      <button id="srct-camera" onclick="setSrcType('camera')">La caméra et le micro de cet appareil</button>
+      <button id="srct-capture" onclick="setSrcType('capture')">La sortie de la régie, branchée ici</button>
+    </div>
+  </div>
+
+  <div class="az-section">
     <div class="az-calib none" id="az-calib"></div>
   </div>
 
@@ -781,12 +797,8 @@ button { font-family: var(--mono); }
   <details class="az-section az-details" id="az-howto" open>
     <summary>Comment faire</summary>
     <div class="az-info-card">
-      <ol>
-        <li>Sur l'autre appareil : <b>Générateur → Signal de mesure</b>, volume au maximum, devant la caméra et le micro de la chaîne.</li>
-        <li>Ici : appuie sur <b>Mesurer</b>, puis vise le moniteur de sortie, tout près de l'enceinte (ou du casque) qui diffuse le son de la chaîne.</li>
-        <li>Cet appareil ne doit pas entendre le Générateur en direct. Dès que flash et bip sont repérés, ne bouge plus : environ <span id="az-eta">15</span> s.</li>
-      </ol>
-      <p style="margin-top:8px">À savoir : le retard propre du moniteur et de l'enceinte que tu vises est inclus dans la mesure. Décalage mesurable : jusqu'à 2,5 s.</p>
+      <ol id="az-howto-list"></ol>
+      <p style="margin-top:8px" id="az-howto-note"></p>
     </div>
   </details>
 
@@ -827,21 +839,14 @@ button { font-family: var(--mono); }
 <!-- ===== ANALYSEUR — avant l'étalonnage ===== -->
 <div id="analyzer-calib" class="screen">
   <div class="az-header">
-    <h2>Étalonnage</h2>
-    <p>Sans passer par la chaîne</p>
+    <h2 id="calib-title">Étalonnage</h2>
+    <p id="calib-sub">Sans passer par la chaîne</p>
   </div>
   <div class="az-section">
-    <div class="az-info-card">
-      <ol>
-        <li>Pose le <b>Générateur</b> juste en face de cet appareil, à environ 30 cm.</li>
-        <li>Sur le Générateur : <b>Signal de mesure</b> lancé, volume au maximum.</li>
-        <li>Vise directement son écran. <b>Ne vise pas le moniteur de la chaîne</b>, et coupe le son de la régie s'il s'entend ici.</li>
-        <li>Ne bouge plus : environ <span id="az-calib-eta">25</span> s.</li>
-      </ol>
-    </div>
+    <div class="az-info-card"><ol id="calib-steps"></ol></div>
   </div>
   <div class="az-section">
-    <div class="az-calib">L'étalonnage mesure le décalage propre des deux appareils (écran, haut-parleur, caméra, micro) pour le retirer des mesures suivantes. À refaire si tu changes l'un des deux appareils ou la sortie son du Générateur (pas de Bluetooth).</div>
+    <div class="az-calib" id="calib-note"></div>
   </div>
   <button class="az-start-btn" onclick="startAnalyzer('calib')">C'est en place — étalonner</button>
   <button class="back-btn" onclick="backToAnalyzerSetup()">Annuler</button>
@@ -865,9 +870,9 @@ button { font-family: var(--mono); }
     </div>
     <div class="az-source-panel" id="az-source-panel">
       <label for="src-video">Image</label>
-      <select id="src-video" onchange="onSourceChange()"></select>
+      <select id="src-video" onchange="onSourceChange(this.id)"></select>
       <label for="src-audio">Son</label>
-      <select id="src-audio" onchange="onSourceChange()"></select>
+      <select id="src-audio" onchange="onSourceChange(this.id)"></select>
       <button class="az-link" onclick="toggleSourcePanel()">Fermer</button>
     </div>
     <div class="az-progress">
@@ -959,7 +964,7 @@ button { font-family: var(--mono); }
 <script>
 'use strict';
 // =====================================================================
-// Sync Test Pro v9.0.0 — fichier unique, zéro dépendance.
+// Sync Test Pro v9.1.0 — fichier unique, zéro dépendance.
 //
 // RÈGLES À NE PAS CASSER (voir 00_CLAUDE/INSTRUCTIONS.md)
 //  - Les bips sont pré-programmés par lots sur l'horloge audio matérielle
@@ -972,7 +977,7 @@ button { font-family: var(--mono); }
 //  - L'Analyseur n'émet aucun son ; micro sans AGC, ni réduction de bruit,
 //    ni annulation d'écho.
 // =====================================================================
-const APP_VERSION = '9.0.0';
+const APP_VERSION = '9.1.0';
 const $ = id => document.getElementById(id);
 
 // ========== CONSTANTES PARTAGÉES ==========
@@ -1010,7 +1015,8 @@ const MAX_HISTORY = 50;
 const PASSES_MIN=10, PASSES_MAX=30; // en dessous de 10 flashs, des coïncidences peuvent encore passer pour une mesure (simulé : 1 % à 8, 0 à 10)
 function loadJSON(k,def){try{const r=localStorage.getItem(k);return r?JSON.parse(r):def;}catch(e){return def;}}
 function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-const prefs=Object.assign({passes:10,fps:25,debug:false,compat:false,vId:'',aId:'',lastKey:'',done:false},loadJSON(PREFS_KEY,{})||{});
+const prefs=Object.assign({passes:10,fps:25,debug:false,compat:false,vId:'',aId:'',lastKey:'',done:false,
+  srcType:'camera',capV:'',capA:'',lastKeyCap:''},loadJSON(PREFS_KEY,{})||{});
 prefs.passes=Math.max(PASSES_MIN,Math.min(PASSES_MAX,parseInt(prefs.passes,10)||10));
 if(!RESULT_FPS.includes(prefs.fps))prefs.fps=25;
 function savePrefs(){saveJSON(PREFS_KEY,prefs);}
@@ -1037,7 +1043,7 @@ const IS_WEBKIT=/AppleWebKit/.test(navigator.userAgent||'')&&!/Chrome\/|Chromium
 const IS_IOS=/iP(hone|ad|od)/.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
 // NTP: wall clock to audio clock mapping
-let ntpWallT0=0, ntpAudioT0=0, ntpScheduledUpToSec=-1;
+let ntpScheduledUpToSec=-1;
 let ntpOffsetMs = 0;
 
 const names={
@@ -1127,31 +1133,27 @@ function scheduleBeepsBatch(from,to){
 }
 function maintainSchedule(elSec){const t=Math.floor(elSec)+SCHEDULE_AHEAD;if(t>scheduledUpTo)scheduleBeepsBatch(scheduledUpTo+1,t);}
 
-// Scheduling for NTP: beeps synced to wall clock seconds
-function initNtpBeeps(){
-  ntpWallT0 = Date.now();
-  ntpAudioT0 = audioCtx.currentTime;
-  ntpScheduledUpToSec = -1;
-  maintainNtpBeeps();
+// ========== TIMECODE NTP : bips calés sur l'heure murale ==========
+// v9.1 : la correspondance heure murale → horloge audio est recalculée pour chaque bip (horloge audio lissée),
+// donc plus de dérive sur un usage long ; et le bip est avancé de la latence de sortie pour être ENTENDU
+// pile à la seconde. L'image, elle, montre l'heure à laquelle elle sera visible (un rafraîchissement plus tard).
+function wallToAudio(wallMs){
+  const pNow=performance.now(),wNow=Date.now();
+  return audioTimeAt(pNow+(wallMs-wNow))-outLatency();
 }
+function initNtpBeeps(){ntpScheduledUpToSec=-1;maintainNtpBeeps();}
 function maintainNtpBeeps(){
-  if(!audioCtx||!masterGain) return;
-  const nowWall = Date.now();
-  const nowSec = Math.floor(nowWall / 1000);
-  const targetSec = nowSec + SCHEDULE_AHEAD;
-  if(targetSec <= ntpScheduledUpToSec) return;
-  const startSec = Math.max(nowSec, ntpScheduledUpToSec + 1);
-  for(let wallSec = startSec; wallSec <= targetSec; wallSec++){
-    const wallMs = wallSec * 1000;
-    const deltaFromT0 = (wallMs - ntpWallT0) / 1000;
-    const audioTime = ntpAudioT0 + deltaFromT0;
-    if(audioTime < audioCtx.currentTime - 0.01) continue;
-    const localDate = new Date(wallMs);
-    const localSec = localDate.getSeconds();
-    const freq = isEven(localSec) ? FREQ_EVEN_COUNTER : FREQ_ODD_COUNTER;
-    scheduleBeep(audioTime, freq, BEEP_DUR);
+  if(!audioCtx||!masterGain||clk.off===null)return; // l'horloge lissée doit être calée
+  const nowSec=Math.floor(Date.now()/1000),targetSec=nowSec+SCHEDULE_AHEAD;
+  if(targetSec<=ntpScheduledUpToSec)return;
+  const startSec=Math.max(nowSec,ntpScheduledUpToSec+1);
+  for(let wallSec=startSec;wallSec<=targetSec;wallSec++){
+    const audioTime=wallToAudio(wallSec*1000);
+    if(audioTime<audioCtx.currentTime+0.005)continue; // trop tard pour ce bip
+    const localSec=new Date(wallSec*1000).getSeconds();
+    scheduleBeep(audioTime,isEven(localSec)?FREQ_EVEN_COUNTER:FREQ_ODD_COUNTER,BEEP_DUR);
   }
-  ntpScheduledUpToSec = targetSec;
+  ntpScheduledUpToSec=targetSec;
 }
 
 function haptic(){try{navigator.vibrate?.(25);}catch(e){}}
@@ -1539,7 +1541,7 @@ function startNtpPlayer(){
   let wasPaused=false;
   function render(){
     if(!playing)return;
-    const now=new Date();
+    const now=new Date(Date.now()+refreshMs*DISPLAY_LATENCY_FRAMES); // heure à laquelle cette image sera visible
     const W=window.innerWidth,H=window.innerHeight;
     if(audioPaused()){wasPaused=true;drawPaused(ctx,W,H);animId=requestAnimationFrame(render);return;}
     // après une pause du son, la correspondance heure murale → horloge audio est à refaire
@@ -1572,8 +1574,7 @@ function stopPlayer(){
 
 // ========== RENDU NTP ==========
 // Le timecode NTP reflète l'horloge murale (Date.now()), pas l'horloge audio.
-// Correspondance mur → audio faite une fois au démarrage (ntpWallT0, ntpAudioT0).
-// Limite connue : dérive lente possible entre les deux horloges sur un usage long.
+// Correspondance heure murale → horloge audio : voir « TIMECODE NTP » (recalculée à chaque bip, v9.1).
 function renderNtp(ctx,W,H,now){
   ctx.fillStyle='#000000';ctx.fillRect(0,0,W,H);
   const{tc,h,m,s,frame,ms}=ntpTimecode(now,fps,ntpOffsetMs);
@@ -2067,7 +2068,7 @@ const ana={
   rvfc:false,rvfcCount:0,rvfcDead:false,videoReadyAt:0,vOff:null,vProbe:0,vCap:0,vMed:0,lastMt:-1,
   lastCT:-1,ctChanged:0,lastFrameT:0,frames:0,
   lum:0,env:0,nf:0,thr:0,lastLvlAt:0,triedScript:false,mutedAt:0,voiceProc:false,searchSince:0,bothSince:0,second:0,
-  panelOpen:false,keepPanel:false
+  panelOpen:false,keepPanel:false,needPick:false,devs:null
 };
 let lastResult=null;        // résultat affiché (peut venir de l'historique)
 let lastFresh=null;         // dernier résultat produit par une mesure dans cette session
@@ -2082,15 +2083,30 @@ function refreshSetup(){
   $('az-passes-val').textContent=prefs.passes;
   $('az-passes-minus').disabled=prefs.passes<=PASSES_MIN;
   $('az-passes-plus').disabled=prefs.passes>=PASSES_MAX;
-  $('az-eta').textContent=Math.round(4+prefs.passes*1.1);
   $('az-debug-toggle').classList.toggle('active',!!prefs.debug);
   $('az-compat-toggle').classList.toggle('active',!!prefs.compat);
-  const box=$('az-calib'),map=getCalibMap(),cal=prefs.lastKey?getCalib(prefs.lastKey):null;
+  const cap=capMode(),lastKey=cap?prefs.lastKeyCap:prefs.lastKey;
+  $('srct-camera').classList.toggle('active',!cap);$('srct-capture').classList.toggle('active',cap);
+  // mode d'emploi selon la source
+  const eta=Math.round(4+prefs.passes*1.1);
+  $('az-howto-list').innerHTML=cap
+    ?'<li>Sur le plateau : téléphone <b>Générateur → Signal de mesure</b>, volume au maximum, <b>cadré en gros plan</b> par la caméra, son capté par le micro de la chaîne.</li>'+
+     '<li>Ici : la sortie de la régie branchée sur cet appareil (ATEM en USB ou boîtier de capture). Appuie sur <b>Mesurer</b> : l\'appli choisit l\'entrée de capture (sinon, bouton « Source »).</li>'+
+     '<li>Mets le plan du Générateur au programme, micro ouvert. Environ '+eta+' s.</li>'
+    :'<li>Sur l\'autre appareil : <b>Générateur → Signal de mesure</b>, volume au maximum, devant la caméra (<b>en gros plan</b>) et le micro de la chaîne.</li>'+
+     '<li>Ici : appuie sur <b>Mesurer</b>, puis vise le moniteur de sortie, tout près de l\'enceinte (ou du casque) qui diffuse le son de la chaîne.</li>'+
+     '<li>Cet appareil ne doit pas entendre le Générateur en direct. Dès que flash et bip sont repérés, ne bouge plus : environ '+eta+' s.</li>';
+  $('az-howto-note').textContent=cap
+    ?'Ni téléphone à tenir, ni moniteur, ni enceintes : la mesure porte sur la sortie de la régie elle-même. Décalage mesurable : jusqu\'à 2,5 s.'
+    :'À savoir : le retard propre du moniteur et de l\'enceinte que tu vises est inclus dans la mesure. Pour l\'éviter, branche la sortie de la régie sur un ordinateur (choix « La sortie de la régie »). Décalage mesurable : jusqu\'à 2,5 s.';
+  const box=$('az-calib'),map=getCalibMap(),cal=lastKey?getCalib(lastKey):null;
   const bm=$('az-btn-measure'),bc=$('az-btn-calib');
   if(cal){
     box.className='az-calib ok';
     box.innerHTML='<span class="t">✓ Étalonné le '+esc(dateStr(cal.ts))+'</span>'+
-      'Décalage propre des appareils : '+Math.round(Math.abs(cal.offset))+' ms, retiré des mesures faites avec la même caméra et le même micro. À refaire si tu changes l\'un des deux appareils ou la sortie son du Générateur.'+
+      (cap
+        ?'Décalage propre de l\'entrée de capture : '+Math.round(Math.abs(cal.offset))+' ms, retiré des mesures faites avec cette entrée.'
+        :'Décalage propre des appareils : '+Math.round(Math.abs(cal.offset))+' ms, retiré des mesures faites avec la même caméra et le même micro. À refaire si tu changes l\'un des deux appareils ou la sortie son du Générateur.')+
       '<br><button class="az-link" onclick="clearCalibConfirm()">Effacer l\'étalonnage</button>';
     // étalonné : « Mesurer » est l'action principale
     bm.className='az-start-btn';bm.style.order='0';bm.textContent='▶ Mesurer';
@@ -2099,7 +2115,9 @@ function refreshSetup(){
     const other=Object.keys(map).length>0;
     box.className='az-calib none';
     box.innerHTML='<span class="t">Pas d\'étalonnage'+(other?' pour cette source':'')+'</span>'+
-      'Sans lui, le résultat reste approché (± quelques dizaines de ms) : il inclut le décalage propre des deux appareils.'+
+      (cap
+        ?'Sans lui, le résultat reste approché : il inclut le décalage propre de l\'entrée de capture (souvent plusieurs dizaines de ms). Il se mesure une fois, par une boucle HDMI.'
+        :'Sans lui, le résultat reste approché (± quelques dizaines de ms) : il inclut le décalage propre des deux appareils.')+
       (other?'<br><button class="az-link" onclick="clearCalibConfirm()">Effacer les étalonnages enregistrés</button>':'');
     // pas encore étalonné : le bouton principal est l'étalonnage, la mesure approchée reste possible
     bc.className='az-start-btn';bc.style.order='0';bc.textContent='◎ Étalonner d\'abord';
@@ -2121,6 +2139,21 @@ function clearCalibConfirm(){
 // L'étalonnage ne se lance jamais d'un seul geste : un écran rappelle qu'il se fait sans la chaîne
 function askCalib(){
   if(ana.state!=='idle')return;
+  const cap=capMode();
+  $('calib-title').textContent=cap?'Étalonnage de l\'entrée':'Étalonnage';
+  $('calib-sub').textContent=cap?'Par une boucle HDMI, sans caméra ni micro':'Sans passer par la chaîne';
+  $('calib-steps').innerHTML=cap
+    ?'<li>Ouvre le <b>Générateur → Signal de mesure</b> sur un appareil qui a une sortie HDMI (un autre ordinateur, ou une autre fenêtre de celui-ci affichée sur l\'écran HDMI).</li>'+
+     '<li>Branche cette sortie HDMI <b>directement sur une entrée de la régie</b> : image et son passent dans le même câble. Sur Mac : Réglages Système → Son → Sortie → l\'écran HDMI.</li>'+
+     '<li>Mets cette entrée au programme, sans aucun retard réglé dessus.</li>'+
+     '<li>Ne touche plus à rien : environ <span id="az-calib-eta">25</span> s.</li>'
+    :'<li>Pose le <b>Générateur</b> juste en face de cet appareil, à environ 30 cm.</li>'+
+     '<li>Sur le Générateur : <b>Signal de mesure</b> lancé, volume au maximum.</li>'+
+     '<li>Vise directement son écran. <b>Ne vise pas le moniteur de la chaîne</b>, et coupe le son de la régie s\'il s\'entend ici.</li>'+
+     '<li>Ne bouge plus : environ <span id="az-calib-eta">25</span> s.</li>';
+  $('calib-note').textContent=cap
+    ?'La boucle mesure le décalage propre de l\'entrée de capture (son et image n\'y arrivent pas au même rythme) pour le retirer des mesures suivantes. À refaire si tu changes d\'entrée de capture.'
+    :'L\'étalonnage mesure le décalage propre des deux appareils (écran, haut-parleur, caméra, micro) pour le retirer des mesures suivantes. À refaire si tu changes l\'un des deux appareils ou la sortie son du Générateur (pas de Bluetooth).';
   $('az-calib-eta').textContent=Math.round(4+Math.max(prefs.passes,CALIB_MIN_PASSES)*1.1);
   showScreen('analyzer-calib');$('analyzer-calib').scrollTop=0;
 }
@@ -2150,19 +2183,28 @@ function mediaErrorHtml(e){
   return'Impossible d\'ouvrir la caméra et le micro ('+esc(n||(e&&e.message)||'erreur inconnue')+').';
 }
 
+// ---------- Source : caméra de l'appareil, ou entrée de capture (sortie de la régie branchée) ----------
+function capMode(){return prefs.srcType==='capture';}
+// Noms usuels des entrées de capture (ATEM en USB, boîtiers HDMI → USB…)
+const CAPTURE_RE=/ATEM|Blackmagic|UltraStudio|DeckLink|Intensity|capture|HDMI|Cam ?Link|Elgato|Magewell|AJA|AV\.io|Game ?Capture|USB Video/i;
+function srcIds(){return capMode()?{v:prefs.capV||'',a:prefs.capA||''}:{v:prefs.vId||'',a:prefs.aId||''};}
+function setSrcIds(v,a){if(capMode()){prefs.capV=v;prefs.capA=a;}else{prefs.vId=v;prefs.aId=a;}savePrefs();}
+function setSrcType(t){prefs.srcType=t==='capture'?'capture':'camera';savePrefs();refreshSetup();}
+
 // ---------- Ouverture caméra + micro ----------
 async function openStream(){
+  const ids=srcIds(),cap=capMode();
   const build=useIds=>({
     video:Object.assign({width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60}},
-      useIds&&prefs.vId?{deviceId:{exact:prefs.vId}}:{facingMode:{ideal:'environment'}}),
+      useIds&&ids.v?{deviceId:{exact:ids.v}}:(cap?{}:{facingMode:{ideal:'environment'}})),
     // AGC, réduction de bruit et annulation d'écho coupés : ils lissent l'attaque du bip
     audio:Object.assign({echoCancellation:false,autoGainControl:false,noiseSuppression:false},
-      useIds&&prefs.aId?{deviceId:{exact:prefs.aId}}:{})
+      useIds&&ids.a?{deviceId:{exact:ids.a}}:{})
   });
   try{return await navigator.mediaDevices.getUserMedia(build(true));}
   catch(e){
-    if((prefs.vId||prefs.aId)&&e&&(e.name==='OverconstrainedError'||e.name==='NotFoundError'||e.name==='NotReadableError')){
-      prefs.vId='';prefs.aId='';savePrefs(); // la source mémorisée a disparu : retour aux sources par défaut
+    if((ids.v||ids.a)&&e&&(e.name==='OverconstrainedError'||e.name==='NotFoundError'||e.name==='NotReadableError')){
+      setSrcIds('',''); // la source mémorisée a disparu : retour aux sources par défaut
       return await navigator.mediaDevices.getUserMedia(build(false));
     }
     throw e;
@@ -2170,7 +2212,7 @@ async function openStream(){
 }
 async function populateSources(){
   try{
-    const devs=await navigator.mediaDevices.enumerateDevices();
+    const devs=await navigator.mediaDevices.enumerateDevices();ana.devs=devs;
     const vt=ana.stream&&ana.stream.getVideoTracks()[0],at=ana.stream&&ana.stream.getAudioTracks()[0];
     const curV=(vt&&vt.getSettings().deviceId)||'',curA=(at&&at.getSettings().deviceId)||'';
     const fill=(sel,kind,cur,word)=>{
@@ -2188,8 +2230,15 @@ function applyPanels(){
   $('az-debug-panel').classList.toggle('visible',!!prefs.debug&&!ana.panelOpen); // jamais l'un sur l'autre
 }
 function toggleSourcePanel(){ana.panelOpen=!ana.panelOpen;applyPanels();}
-function onSourceChange(){
-  prefs.vId=$('src-video').value||'';prefs.aId=$('src-audio').value||'';savePrefs();
+function onSourceChange(which){
+  let v=$('src-video').value||'',a=$('src-audio').value||'';
+  // nouvelle image choisie : on prend le son du même appareil s'il en a un (cas d'une entrée de capture)
+  if(which==='src-video'&&ana.devs){
+    const dv=ana.devs.find(d=>d.deviceId===v);
+    const da=dv&&dv.groupId&&ana.devs.find(d=>d.kind==='audioinput'&&d.groupId===dv.groupId);
+    if(da)a=da.deviceId;
+  }
+  setSrcIds(v,a);
   const m=ana.mode;ana.keepPanel=true;      // le panneau reste ouvert : on règle souvent image puis son
   abortAnalyzer(true);startAnalyzer(m);
 }
@@ -2371,12 +2420,12 @@ function resetRun(){
   ana.audioMode='';ana.videoMode='';ana.vLabel='';ana.aLabel='';ana.camFps=0;
   ana.rvfc=false;ana.rvfcCount=0;ana.rvfcDead=false;ana.videoReadyAt=0;ana.vOff=null;ana.vProbe=0;ana.vCap=0;ana.vMed=0;ana.lastMt=-1;
   ana.lastCT=-1;ana.ctChanged=0;ana.lastFrameT=0;ana.frames=0;
-  ana.lum=0;ana.env=0;ana.nf=0;ana.thr=0;ana.lastLvlAt=0;ana.triedScript=false;ana.uiAt=0;ana.mutedAt=0;ana.voiceProc=false;ana.searchSince=0;ana.bothSince=0;ana.second=0;
+  ana.lum=0;ana.env=0;ana.nf=0;ana.thr=0;ana.lastLvlAt=0;ana.triedScript=false;ana.uiAt=0;ana.mutedAt=0;ana.voiceProc=false;ana.searchSince=0;ana.bothSince=0;ana.second=0;ana.needPick=false;
   ana.target=ana.mode==='calib'?Math.max(prefs.passes,CALIB_MIN_PASSES):prefs.passes;if(!ana.keepPanel)ana.panelOpen=false;ana.keepPanel=false;
   if(!ana.cv){ana.cv=document.createElement('canvas');ana.cv.width=CAP_W;ana.cv.height=CAP_H;
     ana.cx=ana.cv.getContext('2d',{willReadFrequently:true});}
   applyPanels();$('az-src-names').textContent='';
-  $('az-run-info').textContent=(ana.mode==='calib'?'Étalonnage':'Mesure')+' · '+ana.target+' flashs';
+  $('az-run-info').textContent=(ana.mode==='calib'?'Étalonnage':'Mesure')+' · '+ana.target+' flashs'+(capMode()?' · entrée de capture':'');
   $('az-phase').textContent='Préparation…';
   $('az-status').textContent='Autorise la caméra et le micro…';
   $('az-count').hidden=true;$('az-checks').hidden=false;$('az-bar').hidden=true;
@@ -2395,6 +2444,26 @@ async function startAnalyzer(mode){
   let stream;
   try{stream=await openStream();}catch(e){return anaFail(token,mediaErrorHtml(e));}
   if(token!==ana.token){stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});return;} // annulé pendant la demande
+  // Entrée de capture pas encore choisie : on la cherche parmi les appareils (leurs noms ne sont lisibles
+  // qu'après l'autorisation), puis on rouvre avec elle et avec le son du même appareil.
+  if(capMode()&&!prefs.capV){
+    let pick=null;
+    try{
+      const devs=await navigator.mediaDevices.enumerateDevices();
+      const v=devs.find(d=>d.kind==='videoinput'&&CAPTURE_RE.test(d.label||''));
+      if(v){
+        const a=devs.find(d=>d.kind==='audioinput'&&d.groupId&&d.groupId===v.groupId)||devs.find(d=>d.kind==='audioinput'&&CAPTURE_RE.test(d.label||''));
+        pick={v:v.deviceId,a:a?a.deviceId:''};
+      }
+    }catch(e){}
+    if(token!==ana.token){stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});return;}
+    if(pick){
+      setSrcIds(pick.v,pick.a);
+      stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});
+      try{stream=await openStream();}catch(e){return anaFail(token,mediaErrorHtml(e));}
+      if(token!==ana.token){stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});return;}
+    }else{ana.needPick=true;ana.panelOpen=true;applyPanels();}
+  }
   ana.stream=stream;anaUsed=true;
   const vt=stream.getVideoTracks()[0],at=stream.getAudioTracks()[0];
   if(!vt||!at)return anaFail(token,'Il faut à la fois une caméra et un micro pour mesurer.');
@@ -2517,6 +2586,15 @@ function updateRunUI(now){
     phase='Recherche du signal…';
     if(audioPaused())status='Le son est en pause : touche l\'écran pour le réactiver.';
     else if(!ana.lastLvlAt&&el>ANA_WARMUP_MS+2500)status='Le micro n\'envoie aucun son : vérifie la source de son (bouton « Source »).';
+    else if(ana.needPick&&capMode())status='Aucune entrée de capture reconnue : choisis la sortie de la régie dans « Image » ci-dessus.';
+    else if(capMode()){
+      if(w<3500&&!(fRecent&&bRecent))status=calib?'Envoie le Signal de mesure en HDMI sur une entrée et mets-la au programme':'Mets au programme le plan du Générateur, micro ouvert';
+      else if(!fRecent&&!bRecent)status='Ni flash ni bip dans la sortie : le Générateur est-il au programme, avec le son de son micro ouvert ? (ou change de source avec « Source »)';
+      else if(!fRecent)status='Bip reçu, mais aucun flash : cadre le téléphone Générateur en gros plan (ou vérifie la source d\'image avec « Source »).';
+      else if(!bRecent)status='Flash vu, mais aucun bip : ouvre sur la console le micro qui capte le Générateur (ou vérifie la source de son avec « Source »).';
+      else if(wb>14000){phase='Signal non reconnu';status=MSG_NO_LOCK;}
+      else status='Flash et bip repérés, encore quelques secondes…';
+    }
     else if(w<3500&&!(fRecent&&bRecent))status=calib?'Vise directement l\'écran du Générateur (~30 cm), pas le moniteur de la chaîne':'Vise le moniteur qui affiche le signal de mesure';
     else if(!fRecent&&!bRecent)status='Ni flash ni bip : lance « Signal de mesure » sur le Générateur et vérifie qu\'il arrive jusqu\'ici (ou change de source avec « Source »).';
     else if(!fRecent)status='Bip entendu, mais aucun flash : cadre l\'écran, il doit bien se détacher dans l\'image (ou vérifie la source d\'image avec « Source »).';
@@ -2589,14 +2667,15 @@ function finishAnalyzer(){
     outliers:st.nOutliers,quality:R.quality,ambiguous:ambiguous,ambKind:ambKind,parity:parity,key:key,
     source:ana.vLabel+' + '+ana.aLabel,video:ana.videoMode,audio:ana.audioMode,expo:Math.round(corr*10)/10,voiceProc:ana.voiceProc,
     values:vals.map(v=>Math.round(v*10)/10)};
+  res.srcType=capMode()?'capture':'camera';
   ana.token++;stopAnalyzer();ana.state='idle';
-  prefs.lastKey=key;
+  if(capMode())prefs.lastKeyCap=key;else prefs.lastKey=key;
   if(mode==='calib'){
     let why='';
     if(ambiguous&&ambKind==='double')why='Deux sons par flash : cet appareil entend aussi un autre haut-parleur';
     else if(ambiguous)why='Le Générateur n\'émet pas le signal de mesure : choisis « Signal de mesure »';
     else if(seM>CALIB_MAX_SE)why='Étalonnage trop incertain (± '+Math.round(2*seM)+' ms)';
-    else if(Math.abs(st.median)>CALIB_MAX_ABS)why='Décalage de '+Math.round(Math.abs(st.median))+' ms, trop grand pour deux appareils face à face';
+    else if(Math.abs(st.median)>CALIB_MAX_ABS)why='Décalage de '+Math.round(Math.abs(st.median))+' ms, trop grand '+(capMode()?'pour une boucle directe':'pour deux appareils face à face');
     res.ok=!why;res.why=why;
     if(res.ok){const c=getCalibMap();c[key]={offset:st.median,ts:res.ts,n:st.n,sigma:st.sigma,se:seM,integ:is,corr:corr};saveJSON(CALIB_KEY,c);}
   }else{
@@ -2704,6 +2783,8 @@ function showResult(res,fromHist){
     // Le chiffre n'est pas une consigne : il reste en petit, pour qu'il ne parte pas chez l'ingé son
     if(fromHist)act.innerHTML=card({who:'Étalonnage'+when,strong:res.ok?'Étalonnage enregistré':'Étalonnage refusé',
       small:res.ok?'Décalage propre des appareils : '+r+' ms.':(res.why||'')});
+    else if(res.ok&&res.srcType==='capture')act.innerHTML=card({who:'Et maintenant',strong:'Remets au programme la caméra qui filme le Générateur',
+      small:'Puis appuie sur « Mesurer la chaîne ». Décalage propre de l\'entrée de capture : '+r+' ms ; il sera retiré de chaque mesure faite avec cette entrée. Rien à régler sur la console.'});
     else if(res.ok)act.innerHTML=card({who:'Et maintenant',strong:'Installe le Générateur devant la caméra et le micro de la chaîne',
       small:'Puis appuie sur « Mesurer la chaîne ». Décalage propre des appareils : '+r+' ms ; il sera retiré de chaque mesure. Rien à régler sur la console.'});
     else act.innerHTML=card({who:'À refaire',strong:res.why||'Étalonnage non enregistré',small:'Place les deux appareils face à face (~30 cm), immobiles, volume au maximum, puis recommence.'});
@@ -2748,7 +2829,7 @@ function showResult(res,fromHist){
     ?'Valeur mesurée '+signed(res.raw)+' − étalonnage '+signed(res.calOffset)+' (du '+esc(dateStr(res.calTs))+')'
     :'Valeur mesurée '+signed(res.raw)+', non corrigée')+' · convention : + = son en retard';
   m+='<br>Dispersion flash à flash : ± '+Math.round(res.sigma)+' ms';
-  m+='<br>Source : '+esc(res.source||'—');
+  m+='<br>Source : '+(res.srcType==='capture'?'entrée de capture — ':'')+esc(res.source||'—');
   if(res.video)m+='<br>Horodatage image : '+esc(res.video)+' · son : '+esc(res.audio||'—')+(res.expo?' · correction de pose '+fr1(res.expo)+' ms':'');
   if(res.voiceProc)m+='<br>Le traitement de la voix de ce micro n\'a pas pu être coupé : précision réduite.';
   if(res.parity==='partial')m+='<br>Un seul des deux bips (aigu 1000 Hz / grave 500 Hz) a été reconnu : le son est peut-être filtré.';
